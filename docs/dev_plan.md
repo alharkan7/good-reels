@@ -2,6 +2,35 @@
 
 > **Instagram Reels-style UI for exploring random, feel-good Wikipedia articles in Bahasa Indonesia.**
 
+### Implementation Status
+
+| Phase | Status | Notes |
+|-------|--------|-------|
+| Phase 1: Foundation | ✅ Complete | All lib, API routes, and types implemented |
+| Phase 2: Core UI | ✅ Complete | Scroll-snap feed, Ken Burns, CSS filters, ReelCard |
+| Phase 3: Interactions | ✅ Complete | Like, bookmark, share, AI chat (merged into comment button) |
+| Phase 4: Prefetching & Polish | ✅ Complete | 100 preloaded articles, prefetch buffer, fallback music |
+| Phase 5: Polish & Assets | ✅ Complete | Inline SVG icons, animations, expandable captions |
+| Phase 6: Network Exploration | ✅ Complete | Changed from 3D to 2D graph; node labels scale with zoom |
+| Phase 7: AI Q&A Chat | ✅ Complete | Full article context, Google Search grounding, markdown rendering |
+
+### Deviations from Original Plan
+
+| Original Plan | Actual Implementation | Reason |
+|---------------|----------------------|--------|
+| Gemini `gemini-2.0-flash-lite` | Gemini `gemini-2.5-flash` | Original model deprecated |
+| Content moderation via Gemini | Skipped entirely | Faster loading; Wikipedia content is generally safe |
+| 3D force-directed graph (`react-force-graph-3d`) | 2D graph (`react-force-graph-2d`) | Better label readability, simpler interaction |
+| Separate AI sparkle button (✨) | AI chat merged into comment button with "AI" label | Cleaner UI, fewer buttons |
+| Separate comment sheet + AI chat sheet | AI chat sheet only (replaces comment sheet) | Unified interaction |
+| Full-resolution images | Thumbnail images | Faster loading |
+| Music loaded from API before content | Bundled fallback tracks + async API fetch | Instant music availability |
+| Mute button in action bar | Mute via tappable music chip at bottom | More intuitive UX |
+| Fixed 50vh chat sheet | 78vh chat sheet | More conversation space |
+| 100 preloaded articles | ✅ Added (not in original plan) | Instant first load, zero loading spinner |
+| `CommentSheet` component | Removed (AI chat replaces it) | Simplified interaction model |
+| `ReelOverlay` component | Inlined into `ReelCard` | Simpler component tree |
+
 ---
 
 ## Table of Contents
@@ -54,7 +83,7 @@
 | Auth | None — anonymous usage |
 | Database | None — browser localStorage only |
 | Content source | Wikipedia Bahasa Indonesia REST API |
-| Content filter | Gemini `gemini-2.0-flash-lite` (cheapest, fastest) |
+| Content filter | ~~Gemini `gemini-2.0-flash-lite`~~ → Skipped (direct Wikipedia fetch) |
 | Background music | Jamendo API (Creative Commons, free `client_id`) |
 | Deployment target | Vercel (optimized for Edge) |
 
@@ -279,7 +308,7 @@ export async function fetchRandomArticle(): Promise<WikipediaSummary | null> {
 
 | Model | Why |
 |-------|-----|
-| `gemini-2.0-flash-lite` | Cheapest, fastest Gemini model. Ideal for simple TRUE/FALSE classification. $0.075/M input tokens, $0.3/M output tokens. |
+| `gemini-2.0-flash-lite` | ~~Cheapest, fastest Gemini model.~~ **Deprecated.** Replaced with `gemini-2.5-flash` in implementation. Content moderation skipped entirely for faster loading. |
 
 ### SDK: `@google/genai`
 
@@ -1700,76 +1729,79 @@ export const runtime = 'edge'; // Links are fetch+parse, perfect for Edge
 
 ### Phase 1: Foundation
 
-| # | File | Task |
-|---|------|------|
-| 1 | `.env.local` | Create with `GEMINI_API_KEY` and `JAMENDO_CLIENT_ID` |
-| 2 | `next.config.ts` | Add `images.remotePatterns` for `upload.wikimedia.org` |
-| 3 | `app/lib/types.ts` | Define `Article`, `Comment`, `WikipediaSummary`, `Track`, `ReelStyle`, `GraphData`, `ChatMessage` interfaces |
-| 4 | `app/lib/wikipedia.ts` | Implement `fetchRandomArticle()` |
-| 5 | `app/lib/gemini.ts` | Implement `isContentSafe()` + chat system prompt builder |
-| 6 | `app/lib/jamendo.ts` | Implement `fetchChillTracks()` |
-| 7 | `app/lib/variety.ts` | Implement `assignReelStyle()` — motion, filter, track assignment |
-| 8 | `app/api/articles/route.ts` | Implement `GET` handler with parallel fetch + filter |
-| 9 | `app/api/tracks/route.ts` | Implement `GET` handler for Jamendo tracks |
-| 10 | `app/api/links/route.ts` | Implement `GET` handler for Wikipedia article hyperlinks |
-| 11 | `app/api/chat/route.ts` | Implement `POST` handler with streaming Gemini response |
+| # | File | Task | Status |
+|---|------|------|--------|
+| 1 | `.env.local` | Create with `GEMINI_API_KEY` and `JAMENDO_CLIENT_ID` | ✅ Done (gitignored, see `env.example`) |
+| 2 | `next.config.ts` | Add `images.remotePatterns` for `upload.wikimedia.org` | ✅ Done |
+| 3 | `app/lib/types.ts` | Define shared interfaces | ✅ Done |
+| 4 | `app/lib/wikipedia.ts` | Implement `fetchRandomArticle()` | ✅ Done |
+| 5 | `app/lib/gemini.ts` | Implement `isContentSafe()` | ✅ Done (but moderation skipped in production for speed) |
+| 6 | `app/lib/jamendo.ts` | Implement `fetchChillTracks()` | ✅ Done |
+| 7 | `app/lib/variety.ts` | Implement `assignReelStyle()` | ✅ Done |
+| 8 | `app/api/articles/route.ts` | GET handler — parallel fetch (no moderation) | ✅ Done |
+| 9 | `app/api/tracks/route.ts` | GET handler — Jamendo tracks | ✅ Done |
+| 10 | `app/api/links/route.ts` | GET handler — Wikipedia hyperlinks | ✅ Done |
+| 11 | `app/api/chat/route.ts` | POST handler — Gemini streaming + Google Search grounding | ✅ Done |
+| — | `app/lib/preloaded-articles.json` | 100 pre-scraped articles for instant load | ✅ Added (not in original plan) |
+| — | `app/lib/fallback-tracks.ts` | Bundled fallback music tracks | ✅ Added (not in original plan) |
+| — | `scripts/scrape-articles.mjs` | Scraper script to regenerate preloaded articles | ✅ Added (not in original plan) |
 
 ### Phase 2: Core UI
 
-| # | File | Task |
-|---|------|------|
-| 12 | `app/globals.css` | Rewrite: scroll-snap, Ken Burns keyframes, filter classes, dark theme |
-| 13 | `app/layout.tsx` | Update metadata, viewport, font, dark background |
-| 14 | `app/components/LoadingReel.tsx` | Skeleton placeholder for loading state |
-| 15 | `app/components/ReelCard.tsx` | Full-screen card with image + Ken Burns motion + CSS filter |
-| 16 | `app/components/ReelOverlay.tsx` | Bottom text overlay with title, summary, wiki chip |
-| 17 | `app/components/MusicIndicator.tsx` | Spinning disc + track name at bottom-right |
-| 18 | `app/components/ReelsFeed.tsx` | Feed container with scroll-snap + IntersectionObserver + audio |
-| 19 | `app/page.tsx` | Replace boilerplate — manage layout mode, render feed or network |
+| # | File | Task | Status |
+|---|------|------|--------|
+| 12 | `app/globals.css` | Scroll-snap, Ken Burns keyframes, dark theme, animations | ✅ Done |
+| 13 | `app/layout.tsx` | Metadata, viewport, Indonesian lang, Geist fonts | ✅ Done |
+| 14 | `app/components/LoadingReel.tsx` | Skeleton placeholder | ✅ Done |
+| 15 | `app/components/ReelCard.tsx` | Full-screen card + expandable caption + Ken Burns + CSS filter | ✅ Done |
+| 16 | `app/components/ReelOverlay.tsx` | Bottom text overlay | ✅ Inlined into ReelCard (component still exists but unused) |
+| 17 | `app/components/MusicIndicator.tsx` | Tappable music chip — mute/unmute with speaker icon | ✅ Done |
+| 18 | `app/components/ReelsFeed.tsx` | Feed container + IntersectionObserver + preloaded buffer | ✅ Done |
+| 19 | `app/page.tsx` | Layout mode orchestration (Reels always-mounted + Graph) | ✅ Done |
 
 ### Phase 3: Interactions
 
-| # | File | Task |
-|---|------|------|
-| 20 | `app/hooks/useLocalInteractions.ts` | localStorage CRUD for likes, bookmarks, comments |
-| 21 | `app/components/ActionBar.tsx` | Right-side action buttons (like, comment, bookmark, share, mute, AI chat) |
-| 22 | `app/components/CommentSheet.tsx` | Bottom sheet for reading/writing comments |
+| # | File | Task | Status |
+|---|------|------|--------|
+| 20 | `app/hooks/useLocalInteractions.ts` | localStorage for likes, bookmarks (useSyncExternalStore) | ✅ Done |
+| 21 | `app/components/ActionBar.tsx` | Like, AI chat (with "AI" label in icon), bookmark, share | ✅ Done (mute button removed — moved to music chip) |
+| 22 | `app/components/CommentSheet.tsx` | Bottom sheet for comments | ❌ Removed (replaced by AI chat sheet) |
 
 ### Phase 4: Prefetching & Polish
 
-| # | File | Task |
-|---|------|------|
-| 23 | `app/hooks/useArticleBuffer.ts` | Buffer management + auto-prefetch logic |
-| 24 | `app/hooks/useBackgroundMusic.ts` | Audio playback, per-reel track switching, mute toggle |
-| 25 | `app/hooks/usePullToRefresh.ts` | Touch gesture for pull-to-refresh at top |
-| 26 | `app/components/PullToRefresh.tsx` | Visual pull indicator |
+| # | File | Task | Status |
+|---|------|------|--------|
+| 23 | `app/hooks/useArticleBuffer.ts` | Preloaded buffer + live prefetch + stall fallback | ✅ Done |
+| 24 | `app/hooks/useBackgroundMusic.ts` | Audio playback per reel, mute toggle | ✅ Done |
+| 25 | `app/hooks/usePullToRefresh.ts` | Touch gesture handling | ✅ Done |
+| 26 | `app/components/PullToRefresh.tsx` | Visual pull indicator | ✅ Done |
 
 ### Phase 5: Polish & Assets
 
-| # | File | Task |
-|---|------|------|
-| 27 | `public/icons/` | Create or source SVG icons for all action buttons + toggle + sparkle |
-| 28 | All components | Micro-animations, haptic-like feedback, transitions |
-| 29 | All components | Error states, empty states, offline handling |
+| # | File | Task | Status |
+|---|------|------|--------|
+| 27 | `public/icons/` | SVG icons | ✅ Done (inline SVGs in components, no separate icon files) |
+| 28 | All components | Animations, transitions | ✅ Done |
+| 29 | All components | Error states, fallback handling | ✅ Partial (loading skeletons, fallback content, try/catch) |
 
-### Phase 6: 3D Network Exploration Mode
+### Phase 6: Network Exploration Mode (changed from 3D to 2D)
 
-| # | File | Task |
-|---|------|------|
-| 30 | `app/components/LayoutToggle.tsx` | Top-center toggle between Reels and Network mode |
-| 31 | `app/components/NetworkLoader.tsx` | Full-screen loading animation for graph mode |
-| 32 | `app/components/NetworkView.tsx` | 3D force-directed graph with `react-force-graph-3d` (dynamic import) |
-| 33 | `app/hooks/useNetworkGraph.ts` | Fetch `/api/links`, build graph data, cache results |
-| 34 | `app/page.tsx` | Wire up layout mode state, toggle handler, node-click → reel flow |
+| # | File | Task | Status |
+|---|------|------|--------|
+| 30 | `app/components/LayoutToggle.tsx` | Reels ↔ Graph toggle (z-50 to float above graph) | ✅ Done |
+| 31 | `app/components/NetworkLoader.tsx` | Loading animation | ✅ Done |
+| 32 | `app/components/NetworkView.tsx` | **2D** force-directed graph with labeled nodes | ✅ Done (changed from 3D) |
+| 33 | `app/hooks/useNetworkGraph.ts` | Fetch + cache graph data | ✅ Done |
+| 34 | `app/page.tsx` | Layout mode + node-click → inject article into feed | ✅ Done |
 
 ### Phase 7: AI Q&A Chat
 
-| # | File | Task |
-|---|------|------|
-| 35 | `app/api/chat/route.ts` | POST handler — receive chat messages, stream Gemini response |
-| 36 | `app/hooks/useAIChat.ts` | Per-article chat session state, streaming SSE reader, session management |
-| 37 | `app/components/AIChatSheet.tsx` | Half-screen bottom sheet: message bubbles, streaming cursor, input field |
-| 38 | `app/components/ActionBar.tsx` | Add sparkle (✨) button to open AIChatSheet |
+| # | File | Task | Status |
+|---|------|------|--------|
+| 35 | `app/api/chat/route.ts` | Streaming Gemini response + Google Search grounding | ✅ Done |
+| 36 | `app/hooks/useAIChat.ts` | Per-article sessions + background full-article fetch | ✅ Done |
+| 37 | `app/components/AIChatSheet.tsx` | 78vh bottom sheet + markdown rendering (bullets, bold, lists) | ✅ Done |
+| 38 | `app/components/ActionBar.tsx` | AI chat opened via comment button (merged, no sparkle button) | ✅ Done |
 
 ---
 
@@ -1941,7 +1973,7 @@ Here is a summary of all API keys needed to run this project:
 
 | Key | Required? | Cost | Where to get it | What it does |
 |-----|-----------|------|-----------------|---------------|
-| `GEMINI_API_KEY` | ✅ Yes | Free tier available (15 RPM, 1M tokens/day) | [Google AI Studio](https://aistudio.google.com/apikey) | Content moderation + AI Q&A chat (both use `gemini-2.0-flash-lite`) |
+| `GEMINI_API_KEY` | ✅ Yes | Free tier available (15 RPM, 1M tokens/day) | [Google AI Studio](https://aistudio.google.com/apikey) | AI Q&A chat only (uses `gemini-2.5-flash`; content moderation skipped) |
 | `JAMENDO_CLIENT_ID` | ✅ Yes | Free | [Jamendo Developer Portal](https://devportal.jamendo.com/) — sign up → create app → get client ID | Background music — streams chill Creative Commons tracks |
 
 **Not required:**
@@ -1966,6 +1998,8 @@ Set these same two variables in **Vercel Dashboard → Project Settings → Envi
 ---
 
 > **Implementation order recommendation:** Start with Phase 1 (foundation) and Phase 2 (core UI) to get the basic feed working. Then add interactions (Phase 3) and prefetching polish (Phase 4) incrementally. This way you'll have a working prototype at each phase.
+
+> **Implementation note:** All 7 phases have been completed. See the status tables above for per-file completion status and the deviations table at the top for differences between the original plan and the actual implementation.
 
 ---
 

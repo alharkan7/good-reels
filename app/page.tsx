@@ -15,6 +15,7 @@ const NetworkView = dynamic(() => import('@/app/components/NetworkView'), {
 export default function Home() {
   const [layoutMode, setLayoutMode] = useState<'reels' | 'network'>('reels');
   const [currentArticle, setCurrentArticle] = useState<Article | null>(null);
+  const [injectedArticle, setInjectedArticle] = useState<Article | null>(null);
   const toggleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleLayoutToggle = useCallback(
@@ -56,6 +57,7 @@ export default function Home() {
           articleUrl: data.content_urls?.mobile?.page || '',
           extract: data.extract || '',
         };
+        setInjectedArticle(article);
         setCurrentArticle(article);
         setLayoutMode('reels');
       })
@@ -81,6 +83,7 @@ export default function Home() {
         <ReelsFeed
           onLayoutToggle={() => handleLayoutToggle('network')}
           onArticleChange={handleArticleChange}
+          injectedArticle={injectedArticle}
         />
       ) : (
         <NetworkView

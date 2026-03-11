@@ -1,7 +1,52 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { ChatMessage } from '@/app/lib/types';
+
+function renderMarkdown(text: string): React.ReactNode[] {
+  const lines = text.split('\n');
+  const result: React.ReactNode[] = [];
+
+  lines.forEach((line, li) => {
+    if (li > 0) result.push(<br key={`br-${li}`} />);
+
+    const parts: React.ReactNode[] = [];
+    let remaining = line;
+    let ki = 0;
+
+    while (remaining.length > 0) {
+      const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
+      if (boldMatch && boldMatch.index !== undefined) {
+        if (boldMatch.index > 0) {
+          parts.push(remaining.slice(0, boldMatch.index));
+        }
+        parts.push(<strong key={`b-${li}-${ki++}`}>{boldMatch[1]}</strong>);
+        remaining = remaining.slice(boldMatch.index + boldMatch[0].length);
+      } else {
+        const italicMatch = remaining.match(/\*(.+?)\*/);
+        if (italicMatch && italicMatch.index !== undefined) {
+          if (italicMatch.index > 0) {
+            parts.push(remaining.slice(0, italicMatch.index));
+          }
+          parts.push(<em key={`i-${li}-${ki++}`}>{italicMatch[1]}</em>);
+          remaining = remaining.slice(italicMatch.index + italicMatch[0].length);
+        } else {
+          parts.push(remaining);
+          remaining = '';
+        }
+      }
+    }
+
+    result.push(...parts);
+  });
+
+  return result;
+}
+
+function MarkdownText({ text }: { text: string }) {
+  const rendered = useMemo(() => renderMarkdown(text), [text]);
+  return <>{rendered}</>;
+}
 
 interface AIChatSheetProps {
   isOpen: boolean;
@@ -117,7 +162,7 @@ export default function AIChatSheet({
                         : 'var(--ai-bubble)',
                   }}
                 >
-                  {msg.text}
+                  <MarkdownText text={msg.text} />
                   {msg.isStreaming && (
                     <span className="streaming-cursor" />
                   )}

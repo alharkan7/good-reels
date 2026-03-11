@@ -15,13 +15,17 @@ import AIChatSheet from './AIChatSheet';
 import PullToRefresh from './PullToRefresh';
 import LoadingReel from './LoadingReel';
 
+const BUFFER_THRESHOLD = 3;
+
 interface ReelsFeedProps {
   onLayoutToggle: () => void;
   onArticleChange: (article: Article) => void;
+  injectedArticle?: Article | null;
 }
 
 export default function ReelsFeed({
   onArticleChange,
+  injectedArticle,
 }: ReelsFeedProps) {
   const {
     articles,
@@ -29,7 +33,16 @@ export default function ReelsFeed({
     setCurrentIndex,
     isLoading,
     refresh,
+    prependArticle,
   } = useArticleBuffer();
+
+  const injectedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (injectedArticle && injectedArticle.id !== injectedRef.current) {
+      injectedRef.current = injectedArticle.id;
+      prependArticle(injectedArticle);
+    }
+  }, [injectedArticle, prependArticle]);
 
   const [tracks, setTracks] = useState<Track[]>(FALLBACK_TRACKS);
   const [chatSheetOpen, setChatSheetOpen] = useState(false);
@@ -194,7 +207,10 @@ export default function ReelsFeed({
         );
       })}
 
-      {articles.length === 0 && isLoading && <LoadingReel />}
+      {/* Loading indicator at the end of the feed */}
+      {(isLoading || articles.length - currentIndex <= BUFFER_THRESHOLD + 1) && (
+        <LoadingReel />
+      )}
 
       {currentArticle && (
         <AIChatSheet

@@ -20,8 +20,8 @@ function shuffled<T>(arr: T[]): T[] {
 
 function getPreloadedBatch(count: number, exclude: Set<string>): Article[] {
   const pool = PRELOADED.filter((a) => !exclude.has(a.id));
-  const picked = shuffled(pool.length > 0 ? pool : PRELOADED).slice(0, count);
-  return picked;
+  const source = pool.length >= count ? pool : PRELOADED;
+  return shuffled(source).slice(0, count);
 }
 
 export function useArticleBuffer() {
@@ -31,11 +31,8 @@ export function useArticleBuffer() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const isFetching = useRef(false);
-  const liveIds = useRef(new Set<string>());
   const preloadedUsed = useRef(new Set<string>());
   const stallTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  articles.forEach((a) => preloadedUsed.current.add(a.id));
 
   const fetchBatch = useCallback(async (count: number) => {
     if (isFetching.current) return;
@@ -55,8 +52,11 @@ export function useArticleBuffer() {
       if (!res.ok) throw new Error('Failed to fetch articles');
       const newArticles: Article[] = await res.json();
       if (newArticles.length > 0) {
-        newArticles.forEach((a) => liveIds.current.add(a.id));
         setArticles((prev) => [...prev, ...newArticles]);
+      } else {
+        const filler = getPreloadedBatch(count, preloadedUsed.current);
+        filler.forEach((a) => preloadedUsed.current.add(a.id));
+        setArticles((prev) => [...prev, ...filler]);
       }
     } catch (error) {
       console.error('Article fetch error:', error);
@@ -104,6 +104,5 @@ export function useArticleBuffer() {
     isLoading,
     refresh,
     prependArticle,
-    isFetching: isFetching.current,
   };
 }

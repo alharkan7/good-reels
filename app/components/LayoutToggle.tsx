@@ -12,7 +12,7 @@ export default function LayoutToggle({
   disabled,
 }: LayoutToggleProps) {
   return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1 p-1 rounded-full backdrop-blur-md"
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1 rounded-full backdrop-blur-md"
       style={{ background: 'rgba(0,0,0,0.5)' }}
     >
       {/* Reels mode */}

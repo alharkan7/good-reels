@@ -16,15 +16,17 @@
 8. [Core UI — Reels-style Vertical Feed](#8-core-ui--reels-style-vertical-feed)
 9. [Ken Burns Image Motion & CSS Filters](#9-ken-burns-image-motion--css-filters)
 10. [Variety Engine — No Two Adjacent Reels Feel the Same](#10-variety-engine--no-two-adjacent-reels-feel-the-same)
-11. [Interaction Layer — Engagement Features](#11-interaction-layer--engagement-features)
-12. [Pull-to-Refresh](#12-pull-to-refresh)
-13. [Local Storage Persistence](#13-local-storage-persistence)
-14. [Performance & Prefetching Strategy](#14-performance--prefetching-strategy)
-15. [Vercel Deployment & Optimization](#15-vercel-deployment--optimization)
-16. [File-by-File Implementation Checklist](#16-file-by-file-implementation-checklist)
-17. [Design System & Visual Specs](#17-design-system--visual-specs)
-18. [Edge Cases & Error Handling](#18-edge-cases--error-handling)
-19. [API Keys Required](#19-api-keys-required)
+11. [3D Network Exploration Mode](#11-3d-network-exploration-mode)
+12. [AI Q&A Chat — Ask About the Article](#12-ai-qa-chat--ask-about-the-article)
+13. [Interaction Layer — Engagement Features](#13-interaction-layer--engagement-features)
+14. [Pull-to-Refresh](#14-pull-to-refresh)
+15. [Local Storage Persistence](#15-local-storage-persistence)
+16. [Performance & Prefetching Strategy](#16-performance--prefetching-strategy)
+17. [Vercel Deployment & Optimization](#17-vercel-deployment--optimization)
+18. [File-by-File Implementation Checklist](#18-file-by-file-implementation-checklist)
+19. [Design System & Visual Specs](#19-design-system--visual-specs)
+20. [Edge Cases & Error Handling](#20-edge-cases--error-handling)
+21. [API Keys Required](#21-api-keys-required)
 
 ---
 
@@ -42,6 +44,8 @@
 - Content is **filtered for positive/neutral vibes** using Gemini API before being shown to the user.
 - At the very top (first reel), **pulling down** triggers a **pull-to-refresh** with a sticky elastic effect.
 - A **variety engine** ensures no two adjacent reels share the same music, motion, or filter combination.
+- A **layout toggle** at the top switches to a **3D network exploration mode** — visualizing the current article's Wikipedia hyperlinks as an interactive force-directed graph. Tapping a node opens that article as a reel.
+- An **AI Q&A button** (✨) in the action bar opens a half-screen chat sheet where users can ask questions about the current article. Gemini answers with the article's full content pre-loaded as context. Each article gets its own chat session.
 
 ### Prototype Constraints
 
@@ -67,14 +71,17 @@
 ### New Dependencies to Install
 
 ```bash
-npm install @google/genai
+npm install @google/genai react-force-graph-3d three @types/three
 ```
 
 | Package | Purpose |
 |---------|---------|
-| `@google/genai` | Official Google Generative AI SDK (replaces deprecated `@google/generative-ai`). Used for Gemini API content moderation calls. |
+| `@google/genai` | Official Google Generative AI SDK. Used for Gemini content moderation (TRUE/FALSE classification). |
+| `react-force-graph-3d` | 3D force-directed graph visualization (wraps three.js). Powers the Network Exploration Mode. |
+| `three` | 3D rendering engine — peer dependency of `react-force-graph-3d`. |
+| `@types/three` | TypeScript types for three.js (dev dependency). |
 
-> **Note:** We intentionally keep dependencies minimal. CSS Scroll Snap + Intersection Observer + native touch events + CSS animations + CSS filters are sufficient for the entire Reels experience — no extra gesture/animation/music libraries needed. Jamendo tracks are streamed via native `<audio>` elements.
+> **Note:** Beyond the graph visualization, we keep dependencies minimal. CSS Scroll Snap + Intersection Observer + native touch events + CSS animations + CSS filters are sufficient for the Reels experience. Jamendo tracks stream via native `<audio>` elements.
 
 ---
 
@@ -132,7 +139,9 @@ npm install @google/genai
 5. **CSS Scroll Snap**: Native browser scroll-snap for the "reel" snapping behavior — no JS animation library needed, best performance.
 6. **CSS-only visual effects**: Ken Burns motion + image filters are pure CSS animations — zero JS overhead, GPU-accelerated.
 7. **Variety engine**: Client-side algorithm ensures no two adjacent reels share the same motion preset, filter preset, or music track.
-8. **Edge Runtime**: Route handlers use Vercel Edge Runtime for minimal cold-start latency.
+8. **3D network mode**: A separate `/api/links` route parses a full Wikipedia article and returns all internal hyperlinks, powering the interactive 3D graph view.
+9. **AI Q&A chat**: A streaming `/api/chat` route sends the article's full extract as system context to Gemini, then streams the LLM response back to the client. Each article gets its own ephemeral chat session.
+10. **Edge Runtime**: Lightweight routes (`/api/tracks`, `/api/links`) use Edge Runtime for low-latency.
 
 ---
 
@@ -144,33 +153,43 @@ good-reels/
 │   ├── api/
 │   │   ├── articles/
 │   │   │   └── route.ts              # GET /api/articles — fetch + filter articles
-│   │   └── tracks/
-│   │       └── route.ts              # GET /api/tracks — fetch chill music from Jamendo
+│   │   ├── tracks/
+│   │   │   └── route.ts              # GET /api/tracks — fetch chill music from Jamendo
+│   │   ├── links/
+│   │   │   └── route.ts              # GET /api/links?title=... — extract article hyperlinks
+│   │   └── chat/
+│   │       └── route.ts              # POST /api/chat — streaming AI Q&A about current article
 │   ├── components/
 │   │   ├── ReelsFeed.tsx             # Main feed container (scroll-snap host)
 │   │   ├── ReelCard.tsx              # Individual reel (full-screen article card)
 │   │   ├── ReelOverlay.tsx           # Bottom overlay: title, summary, wiki chip
-│   │   ├── ActionBar.tsx             # Right sidebar: like, comment, bookmark, share
+│   │   ├── ActionBar.tsx             # Right sidebar: like, comment, bookmark, share, AI chat
 │   │   ├── CommentSheet.tsx          # Bottom sheet for comments
+│   │   ├── AIChatSheet.tsx           # Bottom sheet for AI Q&A conversation
 │   │   ├── PullToRefresh.tsx         # Pull-to-refresh indicator & logic
 │   │   ├── MusicIndicator.tsx        # Spinning disc + track name (bottom-right)
-│   │   └── LoadingReel.tsx           # Skeleton/placeholder during load
+│   │   ├── LoadingReel.tsx           # Skeleton/placeholder during load
+│   │   ├── LayoutToggle.tsx          # Top toggle switch: Reels ↔ Network mode
+│   │   ├── NetworkView.tsx           # 3D force-directed graph (react-force-graph-3d)
+│   │   └── NetworkLoader.tsx         # Loading animation while graph data is being fetched
 │   ├── hooks/
 │   │   ├── useArticleBuffer.ts       # Buffer management + prefetching logic
 │   │   ├── useBackgroundMusic.ts     # Audio playback, crossfade, mute toggle
+│   │   ├── useNetworkGraph.ts        # Fetch links, build graph data, manage graph state
+│   │   ├── useAIChat.ts              # Manage chat sessions, stream responses, per-article state
 │   │   ├── useLocalInteractions.ts   # localStorage read/write for likes etc.
 │   │   └── usePullToRefresh.ts       # Touch gesture handling for pull-to-refresh
 │   ├── lib/
 │   │   ├── wikipedia.ts              # Wikipedia API client functions
-│   │   ├── gemini.ts                 # Gemini moderation client
+│   │   ├── gemini.ts                 # Gemini moderation + AI chat client
 │   │   ├── jamendo.ts                # Jamendo music API client
 │   │   ├── variety.ts                # Variety engine: assign motion, filter, music
 │   │   └── types.ts                  # Shared TypeScript interfaces
 │   ├── globals.css                   # Global styles + Tailwind + scroll-snap + Ken Burns keyframes
 │   ├── layout.tsx                    # Root layout (viewport meta, fonts)
-│   └── page.tsx                      # Main page — just renders <ReelsFeed />
+│   └── page.tsx                      # Main page — manages layout mode + renders feed or network
 ├── public/
-│   └── icons/                        # SVG icons for like, comment, share, bookmark
+│   └── icons/                        # SVG icons for like, comment, share, bookmark, toggle, sparkle
 ├── docs/
 │   └── dev_plan.md                   # This file
 ├── .env.local                        # GEMINI_API_KEY, JAMENDO_CLIENT_ID (gitignored)
@@ -772,7 +791,545 @@ Since there are **8 motions × 10 filters × N tracks**, the combination space i
 
 ---
 
-## 11. Interaction Layer — Engagement Features
+## 11. 3D Network Exploration Mode
+
+A **layout toggle** at the top of the screen switches the entire view from the Reels/TikTok vertical feed into an interactive **3D force-directed graph** that visualizes the hyperlink relationships within Wikipedia articles.
+
+### Concept
+
+```
+                         ┌─────────────────────────────────────┐
+                         │        NETWORK MODE                 │
+                         │                                     │
+                         │      ╭─── Linked Article B          │
+                         │     ╱                               │
+                         │    ╱   ╭─ Linked Article C          │
+                         │   ╱   ╱                             │
+   Current Article ──────╋──●───●── Linked Article D           │
+   (center node)         │   ╲   ╲                             │
+                         │    ╲   ╰─ Linked Article E          │
+                         │     ╲                               │
+                         │      ╰─── Linked Article F          │
+                         │                                     │
+                         │   (rotate, zoom, pan the 3D scene)  │
+                         │                                     │
+                         │   [ Tap any node → open as Reel ]   │
+                         └─────────────────────────────────────┘
+```
+
+### How it works
+
+1. User is viewing an article in the standard Reels layout.
+2. User taps the **layout toggle** (top of screen) → switches to Network Mode.
+3. A **loader** appears ("Memuat jaringan artikel...") while the backend fetches and parses the full article.
+4. The API extracts all **internal Wikipedia hyperlinks** from the article.
+5. The result is rendered as a **3D force-directed graph**:
+   - **Center node** = the current article (larger, highlighted).
+   - **Surrounding nodes** = all linked Wikipedia articles (smaller dots).
+   - **Edges** = connections between the center and each linked article.
+6. User can **rotate**, **zoom**, and **pan** the 3D scene (touch/mouse).
+7. **Tapping a node** opens that article as the current reel:
+   - The view switches back to Reels layout.
+   - That article is shown as the first reel.
+   - A few more random articles are pre-loaded below for continued scrolling.
+8. User can toggle back to Network Mode at any time to explore the new article's links.
+
+### Wikipedia Links API
+
+Wikipedia's MediaWiki Action API provides an endpoint to extract all internal links from a page:
+
+```
+GET https://id.wikipedia.org/w/api.php
+    ?action=query
+    &titles={ARTICLE_TITLE}
+    &prop=links
+    &pllimit=max
+    &plnamespace=0
+    &format=json
+```
+
+This returns all links to other Wikipedia articles (namespace 0 = main articles only). We also fetch the summary for each linked article to display its title and description in the graph.
+
+### API Route: `/api/links`
+
+```typescript
+// app/api/links/route.ts
+export const runtime = 'edge';
+
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const title = url.searchParams.get('title');
+  if (!title) return Response.json({ error: 'title required' }, { status: 400 });
+
+  // Step 1: Get all internal links from the article
+  const linksUrl = `https://id.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=links&pllimit=max&plnamespace=0&format=json`;
+  const linksRes = await fetch(linksUrl, {
+    headers: { 'Api-User-Agent': 'GoodReels/1.0' },
+  });
+  const linksData = await linksRes.json();
+
+  // Extract link titles from response
+  const pages = Object.values(linksData.query.pages) as any[];
+  const links: string[] = pages[0]?.links?.map((l: any) => l.title) || [];
+
+  // Step 2: Fetch summaries for linked articles (batch, max ~30 for performance)
+  const limitedLinks = links.slice(0, 40);
+  const summaries = await Promise.allSettled(
+    limitedLinks.map(async (linkTitle) => {
+      const res = await fetch(
+        `https://id.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(linkTitle)}`,
+        { headers: { 'Api-User-Agent': 'GoodReels/1.0' } }
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      return {
+        title: data.title,
+        description: data.description || '',
+        thumbnailUrl: data.thumbnail?.source || null,
+        articleUrl: data.content_urls?.mobile?.page || '',
+        pageid: data.pageid,
+      };
+    })
+  );
+
+  // Filter successful fetches
+  const nodes = summaries
+    .filter(r => r.status === 'fulfilled' && r.value !== null)
+    .map(r => (r as PromiseFulfilledResult<any>).value);
+
+  return Response.json({
+    center: title,
+    links: nodes,
+    totalLinksInArticle: links.length,
+  });
+}
+```
+
+### Graph Visualization: `NetworkView.tsx`
+
+Uses `react-force-graph-3d` (built on three.js) for hardware-accelerated 3D rendering.
+
+```typescript
+// Simplified structure
+import ForceGraph3D from 'react-force-graph-3d';
+
+interface GraphData {
+  nodes: { id: string; name: string; thumbnail?: string; isCenter: boolean }[];
+  links: { source: string; target: string }[];
+}
+
+export function NetworkView({ articleTitle, onNodeClick }: Props) {
+  const { graphData, isLoading } = useNetworkGraph(articleTitle);
+
+  if (isLoading) return <NetworkLoader />;
+
+  return (
+    <ForceGraph3D
+      graphData={graphData}
+      nodeLabel="name"
+      nodeColor={node => node.isCenter ? '#FF6B35' : '#4ECDC4'}
+      nodeRelSize={node => node.isCenter ? 12 : 6}
+      linkColor={() => 'rgba(255,255,255,0.15)'}
+      linkWidth={1}
+      backgroundColor="#000000"
+      onNodeClick={(node) => onNodeClick(node.id, node.name)}
+      nodeThreeObject={(node) => {
+        // Custom: render thumbnail as texture on sphere if available
+        // Or fallback to colored sphere with text label
+      }}
+      enableNavigationControls={true}
+      showNavInfo={false}
+    />
+  );
+}
+```
+
+### Hook: `useNetworkGraph.ts`
+
+```typescript
+export function useNetworkGraph(articleTitle: string) {
+  const [graphData, setGraphData] = useState<GraphData | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!articleTitle) return;
+    setIsLoading(true);
+
+    fetch(`/api/links?title=${encodeURIComponent(articleTitle)}`)
+      .then(res => res.json())
+      .then(data => {
+        // Build graph data structure
+        const nodes = [
+          { id: articleTitle, name: articleTitle, isCenter: true },
+          ...data.links.map((link: any) => ({
+            id: link.title,
+            name: link.title,
+            thumbnail: link.thumbnailUrl,
+            isCenter: false,
+          })),
+        ];
+
+        const links = data.links.map((link: any) => ({
+          source: articleTitle,
+          target: link.title,
+        }));
+
+        setGraphData({ nodes, links });
+      })
+      .finally(() => setIsLoading(false));
+  }, [articleTitle]);
+
+  return { graphData, isLoading };
+}
+```
+
+### Component: `LayoutToggle.tsx`
+
+```
+  ┌─────────────────────────────────────┐
+  │  ┌──────┐  ┌──────┐                │
+  │  │ ▦▦▦  │  │ ◉──◉ │                │
+  │  │ Reels│  │Graph │                │
+  │  └──────┘  └──────┘                │
+  │  ↑ active                          │
+  └─────────────────────────────────────┘
+```
+
+- **Positioned**: fixed at the top-center of the screen, overlaying the feed.
+- **Two icons**: Reels icon (stacked rectangles) and Network icon (connected nodes).
+- **Active state**: highlighted with accent color, subtle pill-shaped background.
+- **Semi-transparent background** to not obstruct the content.
+- **Animated transition**: smooth fade/scale when switching modes.
+- On toggle:
+  - **Reels → Network**: pauses music, shows `NetworkLoader`, then renders `NetworkView`.
+  - **Network → Reels**: returns to the reel that was visible before the toggle.
+
+### Component: `NetworkLoader.tsx`
+
+- Full-screen dark overlay with animated loader.
+- Pulsing network-graph icon or animated dots forming connections.
+- Text: "Memuat jaringan artikel..." (Loading article network...).
+- Shown during the `isLoading` state of `useNetworkGraph`.
+
+### Flow: Node Click → Open as Reel
+
+When a user taps a node in the 3D graph:
+
+1. `onNodeClick(nodeTitle)` is called.
+2. The app fetches the summary for that article (via `/api/articles` with a specific title, or `/api/links` can provide inline data).
+3. Layout switches back to Reels mode.
+4. The tapped article becomes **the first reel** in a fresh feed.
+5. A few more random articles are prefetched and appended below for continued scrolling.
+6. The user can scroll down as usual, or toggle back to Network to see the new article's links.
+
+### Performance Considerations
+
+- **Link limit**: Cap at ~40 linked articles per graph to keep rendering fast. Show a "+ N more" indicator if there are more.
+- **Summary fetching**: Use `Promise.allSettled` for parallel fetching of linked article summaries. Tolerate individual failures.
+- **Lazy 3D rendering**: `react-force-graph-3d` is only loaded when Network Mode is activated (dynamic import with `next/dynamic`).
+- **Cache graph data**: If user toggles back and forth, cache the last graph data in state to avoid re-fetching.
+
+```typescript
+// Lazy load the heavy 3D component
+import dynamic from 'next/dynamic';
+const NetworkView = dynamic(() => import('./NetworkView'), {
+  ssr: false,
+  loading: () => <NetworkLoader />,
+});
+```
+
+---
+
+## 12. AI Q&A Chat — Ask About the Article
+
+Each reel has a **sparkle button (✨)** in the action bar. Tapping it slides up a **half-screen chat sheet** — identical in feel to Instagram's comment sheet — where users can ask questions about the article they're viewing.
+
+### Concept
+
+```
+┌─────────────────────────────────────┐
+│                                     │
+│   REEL CONTENT (dimmed)             │
+│                                     │
+├─────────────────────────────────────┤  ← 50% screen height
+│  ✨ Tanya tentang artikel ini       │
+│                                     │
+│  ┌─ AI ───────────────────────────┐ │
+│  │ Artikel ini membahas sejarah   │ │
+│  │ Indonesia dari masa kerajaan   │ │
+│  │ hingga kemerdekaan. Ada yang   │ │
+│  │ ingin kamu ketahui?            │ │
+│  └─────────────────────────────────┘ │
+│                                     │
+│  ┌─ You ──────────────────────────┐ │
+│  │ Siapa tokoh penting di masa    │ │
+│  │ pergerakan nasional?           │ │
+│  └─────────────────────────────────┘ │
+│                                     │
+│  ┌─ AI ───────────────────────────┐ │
+│  │ Beberapa tokoh penting...      │ │
+│  │ ▊ (streaming)                  │ │
+│  └─────────────────────────────────┘ │
+│                                     │
+│  ┌─────────────────────────┐  [↑]  │
+│  │ Ketik pertanyaan...      │      │
+│  └─────────────────────────┘       │
+└─────────────────────────────────────┘
+```
+
+### How it works
+
+1. User taps the **✨ button** in the action bar while viewing a reel.
+2. A **bottom sheet** slides up, covering ~50% of the screen (same animation as CommentSheet).
+3. The sheet starts a **new chat session** tied to the current article.
+4. The **article's full extract** (title + summary from Wikipedia) is pre-loaded into the Gemini system prompt on the backend — the LLM already knows what the user is looking at.
+5. User types a question → sent to `POST /api/chat`.
+6. The response **streams back** in real-time (Server-Sent Events / ReadableStream) — user sees the answer typing out word by word.
+7. User can ask follow-up questions — the full conversation history is sent with each request to maintain context.
+8. **Switching to a different reel automatically resets the chat** — each article gets its own conversation. Previous chats are discarded (ephemeral, not persisted).
+9. Reopening the chat on the same reel resumes where the user left off (state held in React, not localStorage).
+
+### Backend: `POST /api/chat`
+
+```typescript
+// app/api/chat/route.ts
+import { GoogleGenAI } from '@google/genai';
+
+export async function POST(request: Request) {
+  const { articleTitle, articleExtract, messages } = await request.json();
+
+  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+
+  // Build the conversation for Gemini
+  const systemPrompt = `You are a helpful, friendly, and enthusiastic assistant embedded in a Wikipedia article viewer app called "Good Reels". 
+
+The user is currently viewing this Wikipedia article:
+
+**Title:** ${articleTitle}
+
+**Content:**
+${articleExtract}
+
+Your role:
+- Answer questions about this article clearly and concisely.
+- If the user asks something not covered in the article, say so honestly but try to provide helpful general knowledge.
+- Respond in the same language the user uses (Bahasa Indonesia or English).
+- Keep responses concise — this is a mobile chat, not an essay.
+- Be engaging and curious — encourage the user to explore more.
+- Use markdown formatting sparingly (bold for emphasis is fine, but avoid headers or long lists).`;
+
+  // Convert chat messages to Gemini format
+  const contents = messages.map((msg: { role: string; text: string }) => ({
+    role: msg.role === 'user' ? 'user' : 'model',
+    parts: [{ text: msg.text }],
+  }));
+
+  // Stream the response
+  const response = await ai.models.generateContentStream({
+    model: 'gemini-2.0-flash-lite',
+    config: {
+      systemInstruction: systemPrompt,
+      maxOutputTokens: 1024,
+      temperature: 0.7,
+    },
+    contents,
+  });
+
+  // Return as a ReadableStream (Server-Sent Events style)
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      for await (const chunk of response) {
+        const text = chunk.text || '';
+        if (text) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`));
+        }
+      }
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
+}
+```
+
+### Frontend Hook: `useAIChat.ts`
+
+```typescript
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  isStreaming?: boolean;
+}
+
+export function useAIChat(articleId: string, articleTitle: string, articleExtract: string) {
+  // Chat sessions are keyed by articleId — switching articles resets the chat
+  const [sessions, setSessions] = useState<Record<string, ChatMessage[]>>({});
+  const [isStreaming, setIsStreaming] = useState(false);
+
+  const messages = sessions[articleId] || [];
+
+  const sendMessage = async (userText: string) => {
+    const userMsg: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      text: userText,
+    };
+
+    // Add user message to session
+    const updatedMessages = [...messages, userMsg];
+    setSessions(prev => ({ ...prev, [articleId]: updatedMessages }));
+
+    // Create placeholder for AI response
+    const aiMsg: ChatMessage = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      text: '',
+      isStreaming: true,
+    };
+    setSessions(prev => ({
+      ...prev,
+      [articleId]: [...updatedMessages, aiMsg],
+    }));
+
+    setIsStreaming(true);
+
+    // Stream the response
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        articleTitle,
+        articleExtract,
+        messages: updatedMessages.map(m => ({ role: m.role, text: m.text })),
+      }),
+    });
+
+    const reader = res.body!.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+
+      for (const line of lines) {
+        const data = line.slice(6);
+        if (data === '[DONE]') break;
+        const parsed = JSON.parse(data);
+        fullText += parsed.text;
+
+        // Update the AI message in real-time
+        setSessions(prev => ({
+          ...prev,
+          [articleId]: prev[articleId].map(m =>
+            m.id === aiMsg.id ? { ...m, text: fullText } : m
+          ),
+        }));
+      }
+    }
+
+    // Mark streaming as complete
+    setSessions(prev => ({
+      ...prev,
+      [articleId]: prev[articleId].map(m =>
+        m.id === aiMsg.id ? { ...m, isStreaming: false } : m
+      ),
+    }));
+    setIsStreaming(false);
+  };
+
+  const clearSession = () => {
+    setSessions(prev => {
+      const next = { ...prev };
+      delete next[articleId];
+      return next;
+    });
+  };
+
+  return { messages, sendMessage, isStreaming, clearSession };
+}
+```
+
+### Component: `AIChatSheet.tsx`
+
+```
+┌─────────────────────────────────────┐
+│  ✨ Tanya AI tentang artikel ini    │  ← Header with sparkle icon
+│  ─────────────────────────────────  │  ← Drag handle
+│                                     │
+│  ┌─ AI ─────────────────────────┐   │  ← AI messages (left-aligned)
+│  │ Welcome message...           │   │
+│  └───────────────────────────────┘   │
+│                                     │
+│            ┌─ You ──────────────┐   │  ← User messages (right-aligned)
+│            │ User question...   │   │
+│            └────────────────────┘   │
+│                                     │
+│  ┌─ AI ─────────────────────────┐   │  ← Streaming response with cursor
+│  │ Response streaming... ▊      │   │
+│  └───────────────────────────────┘   │
+│                                     │
+│  ┌───────────────────────────┐ [↑]  │  ← Input field + send button
+│  │ Ketik pertanyaan...       │      │
+│  └───────────────────────────┘      │
+└─────────────────────────────────────┘
+```
+
+**Key UI details:**
+
+- Same slide-up animation as `CommentSheet` (translateY 100% → 0, spring easing).
+- **Height**: 50vh (half the screen). Can be dragged to dismiss.
+- **Header**: "✨ Tanya AI tentang artikel ini" with a close button.
+- **Message bubbles**:
+  - AI messages: left-aligned, dark bubble (`#1C1C1E`), white text.
+  - User messages: right-aligned, accent-colored bubble (`#4ECDC4`), white text.
+- **Streaming indicator**: pulsing cursor `▊` at the end of the AI message while streaming.
+- **Input area**: fixed at the bottom of the sheet, with a text field and send button (arrow icon).
+- **Auto-scroll**: chat scrolls to bottom as new content streams in.
+- **Empty state**: when first opened, show a brief intro: "Tanya apa saja tentang artikel ini! 🤔" (Ask anything about this article!).
+
+### Session Management
+
+| Scenario | Behavior |
+|----------|----------|
+| User opens chat on Article A | New session created, empty chat |
+| User asks questions, gets answers | Messages stored in React state, keyed by article ID |
+| User closes chat sheet | Session preserved in state |
+| User reopens chat on same Article A | Previous conversation restored |
+| **User scrolls to Article B** | **Chat resets** — Article B gets a new, empty session |
+| User scrolls back to Article A | Previous session for A is still in state (if not garbage-collected) |
+| User force-refreshes page | All chat sessions lost (ephemeral, not persisted) |
+
+### Why ephemeral sessions?
+
+- Chat is contextual to the reel experience — users are browsing, not building long-term conversations.
+- No localStorage overhead for potentially large chat histories.
+- Keeps the privacy model simple (no stored data to clear).
+- Each article's system prompt is different, so sessions are inherently scoped.
+
+### Gemini Model Choice
+
+Use `gemini-2.0-flash-lite` — same model used for content moderation — because:
+- **Fast**: streaming response with low latency.
+- **Cheap**: free tier supports the Q&A use case easily.
+- **Context window**: 1M tokens — more than enough for a Wikipedia article extract + chat history.
+- Same `GEMINI_API_KEY` — no additional keys needed.
+
+---
+
+## 13. Interaction Layer — Engagement Features
 
 ### Like
 
@@ -823,9 +1380,16 @@ async function shareArticle(title: string, url: string) {
 }
 ```
 
+### AI Chat
+
+- **Sparkle button (✨)** in the action bar — positioned after the standard buttons.
+- Tapping opens `<AIChatSheet>` (half-screen bottom sheet).
+- Badge indicator: glows subtly to hint at the feature on first use.
+- See [§12 AI Q&A Chat](#12-ai-qa-chat--ask-about-the-article) for full details.
+
 ---
 
-## 12. Pull-to-Refresh
+## 14. Pull-to-Refresh
 
 ### Behavior Spec
 
@@ -883,7 +1447,7 @@ function usePullToRefresh(containerRef, onRefresh) {
 
 ---
 
-## 13. Local Storage Persistence
+## 15. Local Storage Persistence
 
 ### Hook: `useLocalInteractions.ts`
 
@@ -922,7 +1486,7 @@ export function useLocalInteractions() {
 
 ---
 
-## 14. Performance & Prefetching Strategy
+## 16. Performance & Prefetching Strategy
 
 This is the **critical engineering challenge** — ensuring the scroll feels buttery smooth.
 
@@ -1064,7 +1628,7 @@ const nextConfig: NextConfig = {
 
 ---
 
-## 15. Vercel Deployment & Optimization
+## 17. Vercel Deployment & Optimization
 
 ### Environment Variables
 
@@ -1110,7 +1674,12 @@ export const maxDuration = 30; // Allow up to 30s for retries
 export const runtime = 'edge'; // Tracks are simple fetch+cache, perfect for Edge
 ```
 
-> **Note:** The `/api/tracks` route can safely use Edge Runtime since it's a simple fetch-and-cache operation. The `/api/articles` route uses Node.js runtime because it involves multiple sequential retries and Gemini SDK calls.
+```typescript
+// app/api/links/route.ts
+export const runtime = 'edge'; // Links are fetch+parse, perfect for Edge
+```
+
+> **Note:** `/api/tracks` and `/api/links` can safely use Edge Runtime since they're simple fetch-and-cache operations. The `/api/articles` route uses Node.js runtime because it involves multiple sequential retries and Gemini SDK calls.
 
 ### Build Optimizations
 
@@ -1127,7 +1696,7 @@ export const runtime = 'edge'; // Tracks are simple fetch+cache, perfect for Edg
 
 ---
 
-## 16. File-by-File Implementation Checklist
+## 18. File-by-File Implementation Checklist
 
 ### Phase 1: Foundation
 
@@ -1135,61 +1704,82 @@ export const runtime = 'edge'; // Tracks are simple fetch+cache, perfect for Edg
 |---|------|------|
 | 1 | `.env.local` | Create with `GEMINI_API_KEY` and `JAMENDO_CLIENT_ID` |
 | 2 | `next.config.ts` | Add `images.remotePatterns` for `upload.wikimedia.org` |
-| 3 | `app/lib/types.ts` | Define `Article`, `Comment`, `WikipediaSummary`, `Track`, `ReelStyle` interfaces |
+| 3 | `app/lib/types.ts` | Define `Article`, `Comment`, `WikipediaSummary`, `Track`, `ReelStyle`, `GraphData`, `ChatMessage` interfaces |
 | 4 | `app/lib/wikipedia.ts` | Implement `fetchRandomArticle()` |
-| 5 | `app/lib/gemini.ts` | Implement `isContentSafe()` |
+| 5 | `app/lib/gemini.ts` | Implement `isContentSafe()` + chat system prompt builder |
 | 6 | `app/lib/jamendo.ts` | Implement `fetchChillTracks()` |
 | 7 | `app/lib/variety.ts` | Implement `assignReelStyle()` — motion, filter, track assignment |
 | 8 | `app/api/articles/route.ts` | Implement `GET` handler with parallel fetch + filter |
 | 9 | `app/api/tracks/route.ts` | Implement `GET` handler for Jamendo tracks |
+| 10 | `app/api/links/route.ts` | Implement `GET` handler for Wikipedia article hyperlinks |
+| 11 | `app/api/chat/route.ts` | Implement `POST` handler with streaming Gemini response |
 
 ### Phase 2: Core UI
 
 | # | File | Task |
 |---|------|------|
-| 10 | `app/globals.css` | Rewrite: scroll-snap, Ken Burns keyframes, filter classes, dark theme |
-| 11 | `app/layout.tsx` | Update metadata, viewport, font, dark background |
-| 12 | `app/components/LoadingReel.tsx` | Skeleton placeholder for loading state |
-| 13 | `app/components/ReelCard.tsx` | Full-screen card with image + Ken Burns motion + CSS filter |
-| 14 | `app/components/ReelOverlay.tsx` | Bottom text overlay with title, summary, wiki chip |
-| 15 | `app/components/MusicIndicator.tsx` | Spinning disc + track name at bottom-right |
-| 16 | `app/components/ReelsFeed.tsx` | Feed container with scroll-snap + IntersectionObserver + audio |
-| 17 | `app/page.tsx` | Replace boilerplate — render `<ReelsFeed />` |
+| 12 | `app/globals.css` | Rewrite: scroll-snap, Ken Burns keyframes, filter classes, dark theme |
+| 13 | `app/layout.tsx` | Update metadata, viewport, font, dark background |
+| 14 | `app/components/LoadingReel.tsx` | Skeleton placeholder for loading state |
+| 15 | `app/components/ReelCard.tsx` | Full-screen card with image + Ken Burns motion + CSS filter |
+| 16 | `app/components/ReelOverlay.tsx` | Bottom text overlay with title, summary, wiki chip |
+| 17 | `app/components/MusicIndicator.tsx` | Spinning disc + track name at bottom-right |
+| 18 | `app/components/ReelsFeed.tsx` | Feed container with scroll-snap + IntersectionObserver + audio |
+| 19 | `app/page.tsx` | Replace boilerplate — manage layout mode, render feed or network |
 
 ### Phase 3: Interactions
 
 | # | File | Task |
 |---|------|------|
-| 18 | `app/hooks/useLocalInteractions.ts` | localStorage CRUD for likes, bookmarks, comments |
-| 19 | `app/components/ActionBar.tsx` | Right-side action buttons (like, comment, bookmark, share, mute) |
-| 20 | `app/components/CommentSheet.tsx` | Bottom sheet for reading/writing comments |
+| 20 | `app/hooks/useLocalInteractions.ts` | localStorage CRUD for likes, bookmarks, comments |
+| 21 | `app/components/ActionBar.tsx` | Right-side action buttons (like, comment, bookmark, share, mute, AI chat) |
+| 22 | `app/components/CommentSheet.tsx` | Bottom sheet for reading/writing comments |
 
 ### Phase 4: Prefetching & Polish
 
 | # | File | Task |
 |---|------|------|
-| 21 | `app/hooks/useArticleBuffer.ts` | Buffer management + auto-prefetch logic |
-| 22 | `app/hooks/useBackgroundMusic.ts` | Audio playback, per-reel track switching, mute toggle |
-| 23 | `app/hooks/usePullToRefresh.ts` | Touch gesture for pull-to-refresh at top |
-| 24 | `app/components/PullToRefresh.tsx` | Visual pull indicator |
+| 23 | `app/hooks/useArticleBuffer.ts` | Buffer management + auto-prefetch logic |
+| 24 | `app/hooks/useBackgroundMusic.ts` | Audio playback, per-reel track switching, mute toggle |
+| 25 | `app/hooks/usePullToRefresh.ts` | Touch gesture for pull-to-refresh at top |
+| 26 | `app/components/PullToRefresh.tsx` | Visual pull indicator |
 
 ### Phase 5: Polish & Assets
 
 | # | File | Task |
 |---|------|------|
-| 25 | `public/icons/` | Create or source SVG icons for all action buttons |
-| 26 | All components | Micro-animations, haptic-like feedback, transitions |
-| 27 | All components | Error states, empty states, offline handling |
+| 27 | `public/icons/` | Create or source SVG icons for all action buttons + toggle + sparkle |
+| 28 | All components | Micro-animations, haptic-like feedback, transitions |
+| 29 | All components | Error states, empty states, offline handling |
+
+### Phase 6: 3D Network Exploration Mode
+
+| # | File | Task |
+|---|------|------|
+| 30 | `app/components/LayoutToggle.tsx` | Top-center toggle between Reels and Network mode |
+| 31 | `app/components/NetworkLoader.tsx` | Full-screen loading animation for graph mode |
+| 32 | `app/components/NetworkView.tsx` | 3D force-directed graph with `react-force-graph-3d` (dynamic import) |
+| 33 | `app/hooks/useNetworkGraph.ts` | Fetch `/api/links`, build graph data, cache results |
+| 34 | `app/page.tsx` | Wire up layout mode state, toggle handler, node-click → reel flow |
+
+### Phase 7: AI Q&A Chat
+
+| # | File | Task |
+|---|------|------|
+| 35 | `app/api/chat/route.ts` | POST handler — receive chat messages, stream Gemini response |
+| 36 | `app/hooks/useAIChat.ts` | Per-article chat session state, streaming SSE reader, session management |
+| 37 | `app/components/AIChatSheet.tsx` | Half-screen bottom sheet: message bubbles, streaming cursor, input field |
+| 38 | `app/components/ActionBar.tsx` | Add sparkle (✨) button to open AIChatSheet |
 
 ---
 
-## 17. Design System & Visual Specs
+## 19. Design System & Visual Specs
 
 ### Color Palette
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--bg-primary` | `#000000` | Feed background |
+| `--bg-primary` | `#000000` | Feed background, network background |
 | `--text-primary` | `#FFFFFF` | Titles, primary text |
 | `--text-secondary` | `rgba(255,255,255,0.7)` | Summary text |
 | `--accent-like` | `#FF3040` | Active like (heart) |
@@ -1198,6 +1788,15 @@ export const runtime = 'edge'; // Tracks are simple fetch+cache, perfect for Edg
 | `--overlay-gradient` | `linear-gradient(transparent, rgba(0,0,0,0.8))` | Bottom text overlay |
 | `--action-bg` | `rgba(255,255,255,0.1)` | Action button background |
 | `--sheet-bg` | `#1C1C1E` | Comment sheet background |
+| `--node-center` | `#FF6B35` | Center node in network graph |
+| `--node-linked` | `#4ECDC4` | Linked article nodes in network graph |
+| `--node-hover` | `#FFE66D` | Node hover state in network graph |
+| `--edge-default` | `rgba(255,255,255,0.15)` | Graph edge color |
+| `--toggle-active` | `#4ECDC4` | Active toggle background |
+| `--ai-bubble` | `#1C1C1E` | AI chat message bubble background |
+| `--user-bubble` | `#4ECDC4` | User chat message bubble background |
+| `--ai-sparkle` | `#FFD700` | Sparkle button glow / accent |
+| `--ai-streaming` | `rgba(255,215,0,0.6)` | Streaming cursor color |
 
 ### Typography
 
@@ -1208,6 +1807,9 @@ export const runtime = 'edge'; // Tracks are simple fetch+cache, perfect for Edg
 | Action count | Geist Sans | 12px | 600 (semibold) |
 | Comment text | Geist Sans | 14px | 400 |
 | Wiki chip | Geist Sans | 13px | 500 (medium) |
+| AI chat message | Geist Sans | 14px | 400 (regular) |
+| AI chat header | Geist Sans | 16px | 600 (semibold) |
+| AI chat input | Geist Sans | 14px | 400 |
 
 ### Animations
 
@@ -1222,6 +1824,13 @@ export const runtime = 'edge'; // Tracks are simple fetch+cache, perfect for Edg
 | Music disc spin | rotate 360° | 3s | linear (infinite) |
 | Reel card enter | opacity 0 → 1 | 200ms | ease-in |
 | Skeleton shimmer | translateX(-100% → 100%) | 1.5s | linear (infinite) |
+| Layout mode transition | fade crossfade between Reels ↔ Network | 400ms | ease-in-out |
+| Network loader dots | pulsing connected dots animation | 1.5s | ease-in-out, infinite |
+| Node hover glow | scale 1 → 1.3 + bloom | 200ms | ease-out |
+| AI chat sheet open | translateY(100%) → 0 (same as CommentSheet) | 300ms | cubic-bezier(0.32, 0.72, 0, 1) |
+| AI streaming cursor | pulsing `▊` opacity 0.3 → 1 | 800ms | ease-in-out, infinite |
+| AI sparkle button | subtle golden glow pulse | 2s | ease-in-out, infinite |
+| AI message appear | fadeIn + translateY(8px → 0) | 200ms | ease-out |
 
 ### Responsive Design
 
@@ -1246,7 +1855,7 @@ This is a **mobile-first** app. The layout is designed for phones.
 
 ---
 
-## 18. Edge Cases & Error Handling
+## 20. Edge Cases & Error Handling
 
 ### Wikipedia API
 
@@ -1297,15 +1906,42 @@ This is a **mobile-first** app. The layout is designed for phones.
 | User scrolls back to previous reel | Resume that reel's track from where it left off (if still in memory) |
 | User toggles mute | Persist mute state in localStorage; respect across scroll |
 
+### Network Mode
+
+| Scenario | Handling |
+|----------|----------|
+| Article has 0 internal links | Show message: "Artikel ini tidak memiliki tautan" with button to go back to Reels |
+| Article has 200+ links | Cap at 40 nodes for performance; show "+ 160 more" indicator |
+| Links API returns error | Show error state with retry button; allow fallback to Reels |
+| Node clicked but summary fetch fails | Open the article's Wikipedia URL in a new tab as fallback |
+| 3D rendering too slow on device | Detect low frame rate; suggest switching back to Reels mode |
+| User rapidly toggles layout | Debounce the toggle (300ms) to prevent flickering |
+| User toggles to Network with no article loaded | Disabled state — toggle only active when an article is visible |
+
+### AI Q&A Chat
+
+| Scenario | Handling |
+|----------|----------|
+| Gemini returns error | Show inline error message: "Gagal mendapat jawaban. Coba lagi." + retry button |
+| Gemini rate limit | Queue request, show "Mohon tunggu sebentar..." |
+| Streaming interrupted mid-response | Show partial response + "(terputus)" indicator + retry button |
+| User sends empty message | Disable send button when input is empty |
+| User sends very long message | Truncate to 500 characters with character counter |
+| System prompt too large (very long article) | Truncate article extract to first 4000 characters for system prompt |
+| User opens chat before article loads | Sparkle button disabled/hidden until article data is available |
+| User rapid-fires messages | Disable input while streaming; re-enable when response complete |
+| User scrolls to new article while chat is open | Auto-close the chat sheet, start fresh session on next open |
+| Conversation gets very long (20+ messages) | Trim oldest messages from the context window, keep last 10 |
+
 ---
 
-## 19. API Keys Required
+## 21. API Keys Required
 
 Here is a summary of all API keys needed to run this project:
 
 | Key | Required? | Cost | Where to get it | What it does |
 |-----|-----------|------|-----------------|---------------|
-| `GEMINI_API_KEY` | ✅ Yes | Free tier available (15 RPM, 1M tokens/day) | [Google AI Studio](https://aistudio.google.com/apikey) | Content moderation — filters out dark/negative articles |
+| `GEMINI_API_KEY` | ✅ Yes | Free tier available (15 RPM, 1M tokens/day) | [Google AI Studio](https://aistudio.google.com/apikey) | Content moderation + AI Q&A chat (both use `gemini-2.0-flash-lite`) |
 | `JAMENDO_CLIENT_ID` | ✅ Yes | Free | [Jamendo Developer Portal](https://devportal.jamendo.com/) — sign up → create app → get client ID | Background music — streams chill Creative Commons tracks |
 
 **Not required:**

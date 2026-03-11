@@ -20,6 +20,7 @@ export default function NetworkView({
   const graphRef = useRef<Record<string, unknown> | null>(null);
   const [ForceGraph, setForceGraph] = useState<React.ComponentType<Record<string, unknown>> | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     import('react-force-graph-2d').then((mod) => {
@@ -29,8 +30,10 @@ export default function NetworkView({
 
   useEffect(() => {
     const update = () => {
+      const wide = window.innerWidth > 768;
+      setIsDesktop(wide);
       setDimensions({
-        width: window.innerWidth > 768 ? 430 : window.innerWidth,
+        width: wide ? 430 : window.innerWidth,
         height: window.innerHeight,
       });
     };
@@ -111,7 +114,10 @@ export default function NetworkView({
 
   if (!graphData || graphData.nodes.length <= 1) {
     return (
-      <div className="fixed inset-0 z-40 bg-black flex flex-col items-center justify-center gap-4 fade-in">
+      <div
+        className="fixed inset-0 z-40 bg-black flex flex-col items-center justify-center gap-4 fade-in"
+        style={isDesktop ? { maxWidth: '430px', margin: '0 auto', borderLeft: '1px solid rgba(255, 255, 255, 0.1)', borderRight: '1px solid rgba(255, 255, 255, 0.1)' } : undefined}
+      >
         <p className="text-white/60 text-sm">Artikel ini tidak memiliki tautan</p>
         <button
           onClick={onBack}
@@ -128,7 +134,7 @@ export default function NetworkView({
     <div
       ref={containerRef}
       className="fixed inset-0 z-40 bg-black fade-in"
-      style={{ maxWidth: dimensions.width > 430 ? '430px' : '100%', margin: '0 auto' }}
+      style={isDesktop ? { maxWidth: '430px', margin: '0 auto', borderLeft: '1px solid rgba(255, 255, 255, 0.1)', borderRight: '1px solid rgba(255, 255, 255, 0.1)' } : undefined}
     >
       <ForceGraph
         ref={handleRef}

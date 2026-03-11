@@ -22,12 +22,14 @@ interface ReelsFeedProps {
   onArticleChange: (article: Article) => void;
   injectedArticle?: Article | null;
   lang: 'id' | 'en';
+  layoutMode: 'reels' | 'network';
 }
 
 export default function ReelsFeed({
   onArticleChange,
   injectedArticle,
   lang,
+  layoutMode,
 }: ReelsFeedProps) {
   const {
     articles,
@@ -111,7 +113,7 @@ export default function ReelsFeed({
     usePullToRefresh(feedRef, refresh);
 
   useEffect(() => {
-    if (!feedRef.current) return;
+    if (!feedRef.current || layoutMode !== 'reels') return;
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -131,7 +133,7 @@ export default function ReelsFeed({
     cards.forEach((card) => observer.observe(card));
 
     return () => observer.disconnect();
-  }, [articles.length, setCurrentIndex]);
+  }, [articles.length, setCurrentIndex, layoutMode]);
 
   useEffect(() => {
     if (currentArticle) {

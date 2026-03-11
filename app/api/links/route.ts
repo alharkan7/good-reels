@@ -3,11 +3,12 @@ export const runtime = 'edge';
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const title = url.searchParams.get('title');
+  const lang = url.searchParams.get('lang') || 'id'; // default to id
   if (!title) {
     return Response.json({ error: 'title required' }, { status: 400 });
   }
 
-  const linksUrl = `https://id.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=links&pllimit=max&plnamespace=0&format=json`;
+  const linksUrl = `https://${lang}.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(title)}&prop=links&pllimit=max&plnamespace=0&format=json`;
   const linksRes = await fetch(linksUrl, {
     headers: { 'Api-User-Agent': 'GoodReels/1.0' },
   });
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
   const summaries = await Promise.allSettled(
     limitedLinks.map(async (linkTitle) => {
       const res = await fetch(
-        `https://id.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(linkTitle)}`,
+        `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(linkTitle)}`,
         { headers: { 'Api-User-Agent': 'GoodReels/1.0' } }
       );
       if (!res.ok) return null;

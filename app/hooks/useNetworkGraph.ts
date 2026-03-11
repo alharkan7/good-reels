@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { GraphData } from '@/app/lib/types';
 
-export function useNetworkGraph(articleTitle: string) {
+export function useNetworkGraph(articleTitle: string, lang: string = 'id') {
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [totalLinks, setTotalLinks] = useState(0);
@@ -12,16 +12,18 @@ export function useNetworkGraph(articleTitle: string) {
   useEffect(() => {
     if (!articleTitle) return;
 
-    if (cache.current[articleTitle]) {
-      setGraphData(cache.current[articleTitle]);
-      setTotalLinks(cache.current[articleTitle].total);
+    const cacheKey = `${lang}:${articleTitle}`;
+
+    if (cache.current[cacheKey]) {
+      setGraphData(cache.current[cacheKey]);
+      setTotalLinks(cache.current[cacheKey].total);
       return;
     }
 
     setIsLoading(true);
     setGraphData(null);
 
-    fetch(`/api/links?title=${encodeURIComponent(articleTitle)}`)
+    fetch(`/api/links?title=${encodeURIComponent(articleTitle)}&lang=${lang}`)
       .then((res) => res.json())
       .then((data) => {
         const nodes = [
@@ -48,7 +50,7 @@ export function useNetworkGraph(articleTitle: string) {
           links,
           total: data.totalLinksInArticle || 0,
         };
-        cache.current[articleTitle] = result;
+        cache.current[cacheKey] = result;
         setGraphData(result);
         setTotalLinks(data.totalLinksInArticle || 0);
       })
@@ -57,7 +59,7 @@ export function useNetworkGraph(articleTitle: string) {
         setGraphData(null);
       })
       .finally(() => setIsLoading(false));
-  }, [articleTitle]);
+  }, [articleTitle, lang]);
 
   return { graphData, isLoading, totalLinks };
 }

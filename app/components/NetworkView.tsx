@@ -17,11 +17,12 @@ export default function NetworkView({
   onBack,
 }: NetworkViewProps) {
   const { lang } = useLanguage();
-  const { graphData, isLoading, totalLinks } = useNetworkGraph(articleTitle);
+  const { graphData, isLoading, totalLinks } = useNetworkGraph(articleTitle, lang);
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<Record<string, unknown> | null>(null);
   const [ForceGraph, setForceGraph] = useState<React.ComponentType<Record<string, unknown>> | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [isDesktop, setIsDesktop] = useState(false);
 
   useEffect(() => {
     import('react-force-graph-2d').then((mod) => {
@@ -31,8 +32,10 @@ export default function NetworkView({
 
   useEffect(() => {
     const update = () => {
+      const wide = window.innerWidth > 768;
+      setIsDesktop(wide);
       setDimensions({
-        width: window.innerWidth > 768 ? 430 : window.innerWidth,
+        width: wide ? 430 : window.innerWidth,
         height: window.innerHeight,
       });
     };
@@ -40,6 +43,8 @@ export default function NetworkView({
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, []);
+
+  const [showNoUrl, setShowNoUrl] = useState(false);
 
   useEffect(() => {
     const fg = graphRef.current as Record<string, (...args: unknown[]) => unknown> | null;
@@ -55,6 +60,14 @@ export default function NetworkView({
       }
     }
   }, [graphData]);
+
+  useEffect(() => {
+    if (!isLoading && graphData && graphData.nodes.length <= 1) {
+      const timer = setTimeout(() => setShowNoUrl(true), 1500);
+      return () => clearTimeout(timer);
+    }
+    setShowNoUrl(false);
+  }, [isLoading, graphData]);
 
   const displayNodeCount = graphData?.nodes.length ?? 0;
   const extraLinks = totalLinks > 40 ? totalLinks - 40 : 0;
@@ -112,8 +125,17 @@ export default function NetworkView({
   if (isLoading || !ForceGraph) return <NetworkLoader />;
 
   if (!graphData || graphData.nodes.length <= 1) {
+    if (!showNoUrl) return <NetworkLoader />;
     return (
-      <div className="fixed inset-0 z-40 bg-black flex flex-col items-center justify-center gap-4 fade-in">
+      <div 
+        className="fixed inset-y-0 left-1/2 -translate-x-1/2 z-40 bg-black flex flex-col items-center justify-center gap-4 fade-in"
+        style={{
+          width: '100%',
+          maxWidth: '430px',
+          borderLeft: isDesktop ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+          borderRight: isDesktop ? '1px solid rgba(255, 255, 255, 0.1)' : 'none'
+        }}
+      >
         <p className="text-white/60 text-sm">{lang === 'id' ? 'Artikel ini tidak memiliki tautan' : 'This article has no links'}</p>
         <button
           onClick={onBack}
@@ -129,8 +151,13 @@ export default function NetworkView({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 z-40 bg-black fade-in"
-      style={{ maxWidth: dimensions.width > 430 ? '430px' : '100%', margin: '0 auto' }}
+      className="fixed inset-y-0 left-1/2 -translate-x-1/2 z-40 bg-black fade-in overflow-hidden"
+      style={{
+        width: '100%',
+        maxWidth: '430px',
+        borderLeft: isDesktop ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+        borderRight: isDesktop ? '1px solid rgba(255, 255, 255, 0.1)' : 'none'
+      }}
     >
       <ForceGraph
         ref={handleRef}
@@ -160,8 +187,8 @@ export default function NetworkView({
         }}
       />
 
-      <div className="absolute bottom-6 left-4 right-4 z-10">
-        <div className="bg-black/60 backdrop-blur-md rounded-xl p-4">
+      <div className="absolute bottom-6 left-4 right-4 z-10 flex justify-center">
+        <div className="bg-black/60 backdrop-blur-md rounded-xl p-4 w-full text-center">
           <p className="text-white font-semibold text-sm mb-1">{articleTitle}</p>
           <p className="text-white/50 text-xs">
             {displayNodeCount - 1} {lang === 'id' ? 'tautan ditampilkan' : 'links displayed'}

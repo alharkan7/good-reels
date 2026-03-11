@@ -140,6 +140,7 @@ export default function Home() {
           onArticleChange={handleArticleChange}
           injectedArticle={injectedArticle}
           lang={lang}
+          layoutMode={layoutMode}
         />
       </div>
 

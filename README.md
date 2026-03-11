@@ -1,13 +1,14 @@
 # Good Reels
 
-> Instagram Reels-style UI for exploring random Wikipedia articles in Bahasa Indonesia.
+> Instagram Reels-style UI for exploring random Wikipedia articles in Bahasa Indonesia and English.
 
-Swipe through full-screen article cards with cinematic Ken Burns image effects, background music, and AI-powered Q&A — all in a mobile-first vertical feed.
+Swipe through full-screen article cards with cinematic Ken Burns image effects, background music, and AI-powered Q&A — all in a mobile-first vertical feed. You can toggle seamlessly between Indonesian and English content.
 
 ## Features
 
 - **Vertical scroll feed** — CSS Scroll Snap for native reel-snapping, each card is 100dvh
-- **Instant load** — 100 preloaded articles bundled as JSON; shown in random order on first open with zero wait time
+- **Bilingual Experience** — Toggle seamlessly between Bahasa Indonesia and English. Content is dynamically re-fetched or hot-swapped via Wikipedia's language linking.
+- **Instant load** — 100 preloaded articles bundled as JSON (for both ID and EN); shown in random order on first open with zero wait time
 - **Ken Burns motion** — 8 cinematic pan/zoom presets applied via CSS animations on each reel's background image
 - **CSS filters** — 10 color-grading presets (warm, cool, vivid, vintage, etc.) for visual variety
 - **Variety engine** — guarantees no two adjacent reels share the same motion, filter, or music track
@@ -66,7 +67,8 @@ npm run dev       # Start development server
 npm run build     # Production build
 npm run start     # Start production server
 npm run lint      # Run ESLint
-node scripts/scrape-articles.mjs   # Re-scrape 100 preloaded articles
+node scripts/scrape-articles.mjs   # Re-scrape 100 preloaded Indonesian articles
+node scripts/translate-preloaded.mjs # Cross-reference and generate English counterparts
 ```
 
 ## Project Structure
@@ -103,7 +105,8 @@ app/
 │   ├── jamendo.ts            # Jamendo API client
 │   ├── variety.ts            # Motion/filter/track assignment engine
 │   ├── fallback-tracks.ts    # Bundled fallback music tracks
-│   └── preloaded-articles.json # 100 pre-scraped articles
+│   ├── preloaded-articles.json # 100 pre-scraped Indonesian articles
+│   └── preloaded-articles-en.json # 100 pre-scraped English counterparts
 ├── globals.css               # Scroll-snap, Ken Burns keyframes, animations
 ├── layout.tsx                # Root layout
 └── page.tsx                  # Main page (Reels + Graph mode orchestration)
@@ -111,7 +114,8 @@ app/
 
 ## Architecture Decisions
 
-- **Preloaded content** — 100 articles bundled at build time for instant first load; live Wikipedia articles fetched in the background and appended seamlessly
+- **Preloaded content** — 100 articles bundled at build time for instant first load for both ID and EN languages; live Wikipedia articles fetched in the background and appended seamlessly
+- **Bilingual State Synchronization** — Uses cross-referenced ID mapping from `preloaded-articles-en.json` to accomplish sub-millisecond hot-swapping between preloaded Indonesian and English articles instantly. Dynamic Wikipedia items gracefully fallback to recursive individual API translation requests on the fly.
 - **No content moderation** — Gemini moderation skipped for faster load times; articles are served directly from Wikipedia
 - **Thumbnail images** — low-res thumbnails used instead of full-resolution originals for faster rendering
 - **CSS-only visual effects** — Ken Burns motion and image filters are pure CSS animations (GPU-composited, zero JS overhead)

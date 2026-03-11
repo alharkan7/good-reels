@@ -1,26 +1,363 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --bg-primary: #000000;
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --accent-like: #FF3040;
+  --accent-chip: rgba(255, 255, 255, 0.15);
+  --accent-chip-hover: rgba(255, 255, 255, 0.25);
+  --overlay-gradient: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  --action-bg: rgba(255, 255, 255, 0.1);
+  --sheet-bg: #1C1C1E;
+  --node-center: #FF6B35;
+  --node-linked: #4ECDC4;
+  --node-hover: #FFE66D;
+  --edge-default: rgba(255, 255, 255, 0.15);
+  --toggle-active: #4ECDC4;
+  --ai-bubble: #1C1C1E;
+  --user-bubble: #4ECDC4;
+  --ai-sparkle: #FFD700;
+  --ai-streaming: rgba(255, 215, 0, 0.6);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@theme inline {
+  --color-background: var(--bg-primary);
+  --color-foreground: var(--text-primary);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================
+   Scroll Snap Container
+   ========================================== */
+
+.reels-feed {
+  height: 100dvh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
+  scrollbar-width: none;
+}
+
+.reels-feed::-webkit-scrollbar {
+  display: none;
+}
+
+/* ==========================================
+   Individual Reel Card
+   ========================================== */
+
+.reel-card {
+  height: 100dvh;
+  width: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  position: relative;
+  overflow: hidden;
+}
+
+.reel-image-container {
+  position: absolute;
+  inset: -10%;
+  width: 120%;
+  height: 120%;
+  will-change: transform;
+}
+
+.reel-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ==========================================
+   Ken Burns Keyframes
+   ========================================== */
+
+@keyframes kb-zoom-in {
+  from { transform: scale(1) translate(0, 0); }
+  to   { transform: scale(1.15) translate(0, 0); }
+}
+
+@keyframes kb-zoom-out {
+  from { transform: scale(1.2) translate(0, 0); }
+  to   { transform: scale(1) translate(0, 0); }
+}
+
+@keyframes kb-pan-left {
+  from { transform: scale(1.15) translate(5%, 0); }
+  to   { transform: scale(1.15) translate(-5%, 0); }
+}
+
+@keyframes kb-pan-right {
+  from { transform: scale(1.15) translate(-5%, 0); }
+  to   { transform: scale(1.15) translate(5%, 0); }
+}
+
+@keyframes kb-pan-up {
+  from { transform: scale(1.15) translate(0, 5%); }
+  to   { transform: scale(1.15) translate(0, -3%); }
+}
+
+@keyframes kb-pan-down {
+  from { transform: scale(1.15) translate(0, -3%); }
+  to   { transform: scale(1.15) translate(0, 5%); }
+}
+
+@keyframes kb-diagonal-tl {
+  from { transform: scale(1.2) translate(4%, 4%); }
+  to   { transform: scale(1.1) translate(-4%, -4%); }
+}
+
+@keyframes kb-diagonal-br {
+  from { transform: scale(1.1) translate(-4%, -4%); }
+  to   { transform: scale(1.2) translate(4%, 4%); }
+}
+
+/* ==========================================
+   Overlay Gradient
+   ========================================== */
+
+.reel-overlay-gradient {
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.85) 0%,
+    rgba(0, 0, 0, 0.5) 40%,
+    transparent 100%
+  );
+}
+
+/* ==========================================
+   Action Button Animations
+   ========================================== */
+
+.action-btn {
+  transition: transform 150ms ease-out;
+}
+
+.action-btn:active {
+  transform: scale(0.9);
+}
+
+@keyframes like-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+.like-animate {
+  animation: like-pulse 300ms ease-out;
+}
+
+@keyframes double-tap-heart {
+  0% { transform: scale(0); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.double-tap-heart {
+  animation: double-tap-heart 800ms ease-out forwards;
+}
+
+/* ==========================================
+   Bottom Sheet
+   ========================================== */
+
+.sheet-backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes sheet-slide-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+.sheet-enter {
+  animation: sheet-slide-up 300ms cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+.sheet-exit {
+  animation: sheet-slide-down 250ms ease-in forwards;
+}
+
+/* ==========================================
+   Music Disc Spin
+   ========================================== */
+
+@keyframes disc-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.disc-spinning {
+  animation: disc-spin 3s linear infinite;
+}
+
+.disc-paused {
+  animation-play-state: paused;
+}
+
+/* ==========================================
+   Pull-to-Refresh Spinner
+   ========================================== */
+
+@keyframes ptr-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.ptr-spinner {
+  animation: ptr-spin 1000ms linear infinite;
+}
+
+/* ==========================================
+   Skeleton Shimmer
+   ========================================== */
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+/* ==========================================
+   AI Chat Sparkle Button
+   ========================================== */
+
+@keyframes sparkle-glow {
+  0%, 100% { box-shadow: 0 0 4px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 0 12px rgba(255, 215, 0, 0.6); }
+}
+
+.sparkle-glow {
+  animation: sparkle-glow 2s ease-in-out infinite;
+}
+
+@keyframes streaming-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.streaming-cursor::after {
+  content: '▊';
+  color: var(--ai-streaming);
+  animation: streaming-cursor 800ms ease-in-out infinite;
+}
+
+/* ==========================================
+   AI Message Appear
+   ========================================== */
+
+@keyframes msg-appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.msg-appear {
+  animation: msg-appear 200ms ease-out;
+}
+
+/* ==========================================
+   Network Loader
+   ========================================== */
+
+@keyframes pulse-dot {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.3); opacity: 1; }
+}
+
+.pulse-dot {
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+/* ==========================================
+   Layout Transition
+   ========================================== */
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fade-in 400ms ease-in-out;
+}
+
+/* ==========================================
+   Marquee (for long track names)
+   ========================================== */
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-text {
+  animation: marquee 10s linear infinite;
+}
+
+/* ==========================================
+   Responsive: Desktop centered column
+   ========================================== */
+
+@media (min-width: 768px) {
+  .reels-feed {
+    max-width: 430px;
+    margin: 0 auto;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* ==========================================
+   Scrollbar hide utility
+   ========================================== */
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Article, Track, ReelStyle } from '@/app/lib/types';
 import { MOTION_PRESETS, FILTER_PRESETS } from '@/app/lib/variety';
@@ -30,6 +31,24 @@ export default function ReelCard({
 }: ReelCardProps) {
   const motion = MOTION_PRESETS[style.motionPreset];
   const filter = FILTER_PRESETS[style.filterPreset];
+  const [expanded, setExpanded] = useState(false);
+  const [isTruncated, setIsTruncated] = useState(false);
+  const textRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (textRef.current) {
+      setIsTruncated(textRef.current.scrollHeight > textRef.current.clientHeight);
+    }
+  }, [article.summary]);
+
+  const effectiveExpanded = expanded && isActive;
+
+  const handleTextTap = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isTruncated || effectiveExpanded) {
+      setExpanded((v) => !v);
+    }
+  }, [isTruncated, effectiveExpanded]);
 
   return (
     <div className="reel-card bg-black">
@@ -55,28 +74,53 @@ export default function ReelCard({
 
       <div className="absolute inset-0 reel-overlay-gradient z-[5]" />
 
-      <div className="absolute right-3 z-20 flex flex-col items-center gap-5"
-        style={{ bottom: 'calc(25dvh + 16px)' }}
+      <div
+        className="absolute right-3 z-20 flex flex-col items-center gap-5"
+        style={{ bottom: effectiveExpanded ? '55dvh' : 'calc(25dvh + 16px)', transition: 'bottom 300ms ease' }}
       >
         {actionBar}
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 z-10 px-5 pr-16"
-        style={{ height: '28dvh' }}
+      <div
+        className="absolute bottom-0 left-0 right-0 z-10 px-5 pr-16 transition-all duration-300 ease-out"
+        style={{ height: effectiveExpanded ? '55dvh' : '28dvh' }}
       >
         <div className="h-full flex flex-col">
-          {/* Title — fixed size */}
           <h2
             className="text-2xl font-bold text-white mb-1 leading-tight drop-shadow-lg flex-shrink-0 mt-auto"
             style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}
           >
             {article.title}
           </h2>
-          {/* Summary — takes available space, truncates with overflow */}
-          <p className="text-[15px] text-white/80 line-clamp-3 leading-relaxed flex-shrink overflow-hidden min-h-0">
-            {article.summary}
-          </p>
-          {/* Footer — always visible at bottom */}
+
+          {effectiveExpanded ? (
+            <div
+              className="flex-1 min-h-0 overflow-y-auto no-scrollbar mt-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-[15px] text-white/80 leading-relaxed pb-2">
+                {article.summary}
+              </p>
+              <button
+                onClick={handleTextTap}
+                className="text-xs text-white/50 mb-2"
+              >
+                tampilkan lebih sedikit
+              </button>
+            </div>
+          ) : (
+            <p
+              ref={textRef}
+              className="text-[15px] text-white/80 line-clamp-3 leading-relaxed flex-shrink overflow-hidden min-h-0 cursor-pointer"
+              onClick={handleTextTap}
+            >
+              {article.summary}
+              {isTruncated && (
+                <span className="text-white/50 ml-1">...lainnya</span>
+              )}
+            </p>
+          )}
+
           <div className="flex-shrink-0 mt-auto pt-2 pb-3 space-y-1">
             <a
               href={article.articleUrl}

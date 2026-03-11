@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { ChatMessage } from '@/app/lib/types';
 
 export function useAIChat(
@@ -11,6 +11,28 @@ export function useAIChat(
   const [sessions, setSessions] = useState<Record<string, ChatMessage[]>>({});
   const [isStreaming, setIsStreaming] = useState(false);
 
+  const fullExtractCache = useRef<Record<string, string>>({});
+  const fetchingArticle = useRef<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!articleId || !articleTitle) return;
+    if (fullExtractCache.current[articleId] || fetchingArticle.current[articleId]) return;
+
+    fetchingArticle.current[articleId] = true;
+    fetch(
+      `https://id.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(articleTitle)}`,
+      { headers: { 'Api-User-Agent': 'GoodReels/1.0' } }
+    )
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => {
+        if (data?.extract) {
+          fullExtractCache.current[articleId] = data.extract;
+        }
+      })
+      .catch(() => {})
+      .finally(() => { fetchingArticle.current[articleId] = false; });
+  }, [articleId, articleTitle]);
+
   const messages = sessions[articleId] || [];
 
   const sendMessage = useCallback(
@@ -18,6 +40,7 @@ export function useAIChat(
       if (!userText.trim() || isStreaming) return;
 
       const trimmedText = userText.slice(0, 500);
+      const bestExtract = fullExtractCache.current[articleId] || articleExtract;
 
       const userMsg: ChatMessage = {
         id: Date.now().toString(),
@@ -49,7 +72,7 @@ export function useAIChat(
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             articleTitle,
-            articleExtract: articleExtract.slice(0, 4000),
+            articleExtract: bestExtract.slice(0, 4000),
             messages: contextMessages.map((m) => ({
               role: m.role,
               text: m.text,

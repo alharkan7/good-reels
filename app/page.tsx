@@ -33,11 +33,7 @@ export default function Home() {
   const handleNodeClick = useCallback((title: string) => {
     fetch(
       `https://id.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
-      {
-        headers: {
-          'Api-User-Agent': 'GoodReels/1.0 (good-reels prototype)',
-        },
-      }
+      { headers: { 'Api-User-Agent': 'GoodReels/1.0 (good-reels prototype)' } }
     )
       .then((res) => {
         if (!res.ok) throw new Error('Failed to fetch');
@@ -48,10 +44,7 @@ export default function Home() {
           id: data.pageid?.toString() || Date.now().toString(),
           title: data.title,
           summary: data.extract || '',
-          imageUrl:
-            data.thumbnail?.source ||
-            data.originalimage?.source ||
-            '',
+          imageUrl: data.thumbnail?.source || data.originalimage?.source || '',
           imageWidth: data.thumbnail?.width || 800,
           imageHeight: data.thumbnail?.height || 600,
           articleUrl: data.content_urls?.mobile?.page || '',
@@ -62,8 +55,7 @@ export default function Home() {
         setLayoutMode('reels');
       })
       .catch(() => {
-        const wikiUrl = `https://id.m.wikipedia.org/wiki/${encodeURIComponent(title)}`;
-        window.open(wikiUrl, '_blank');
+        window.open(`https://id.m.wikipedia.org/wiki/${encodeURIComponent(title)}`, '_blank');
       });
   }, []);
 
@@ -79,13 +71,16 @@ export default function Home() {
         disabled={!currentArticle && layoutMode === 'reels'}
       />
 
-      {layoutMode === 'reels' ? (
+      {/* Always mounted — hidden via CSS to preserve scroll state */}
+      <div style={{ display: layoutMode === 'reels' ? 'contents' : 'none' }}>
         <ReelsFeed
           onLayoutToggle={() => handleLayoutToggle('network')}
           onArticleChange={handleArticleChange}
           injectedArticle={injectedArticle}
         />
-      ) : (
+      </div>
+
+      {layoutMode === 'network' && (
         <NetworkView
           articleTitle={currentArticle?.title || ''}
           onNodeClick={handleNodeClick}

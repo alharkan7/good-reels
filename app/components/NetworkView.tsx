@@ -50,7 +50,7 @@ export default function NetworkView({
   }, [graphData]);
 
   const nodeCanvasObject = useCallback(
-    (node: Record<string, unknown>, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    (node: Record<string, unknown>, ctx: CanvasRenderingContext2D) => {
       const x = node.x as number;
       const y = node.y as number;
       const label = (node.name as string) || '';
@@ -62,12 +62,12 @@ export default function NetworkView({
       ctx.fillStyle = isCenter ? '#FF6B35' : '#4ECDC4';
       ctx.fill();
 
-      const fontSize = Math.max(12 / globalScale, 2);
+      const fontSize = radius * 1.4;
       ctx.font = `${isCenter ? 'bold ' : ''}${fontSize}px Sans-Serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.fillText(label, x, y + radius + 2);
+      ctx.fillText(label, x, y + radius + 1);
     },
     []
   );

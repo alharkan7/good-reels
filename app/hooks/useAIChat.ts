@@ -3,6 +3,31 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { ChatMessage } from '@/app/lib/types';
 
+async function fetchFullArticle(title: string): Promise<string> {
+  try {
+    const params = new URLSearchParams({
+      action: 'query',
+      titles: title,
+      prop: 'extracts',
+      explaintext: '1',
+      exlimit: '1',
+      format: 'json',
+      origin: '*',
+    });
+    const res = await fetch(`https://id.wikipedia.org/w/api.php?${params}`, {
+      headers: { 'Api-User-Agent': 'GoodReels/1.0' },
+    });
+    if (!res.ok) return '';
+    const data = await res.json();
+    const pages = data.query?.pages;
+    if (!pages) return '';
+    const page = Object.values(pages)[0] as { extract?: string };
+    return page?.extract || '';
+  } catch {
+    return '';
+  }
+}
+
 export function useAIChat(
   articleId: string,
   articleTitle: string,
@@ -19,17 +44,10 @@ export function useAIChat(
     if (fullExtractCache.current[articleId] || fetchingArticle.current[articleId]) return;
 
     fetchingArticle.current[articleId] = true;
-    fetch(
-      `https://id.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(articleTitle)}`,
-      { headers: { 'Api-User-Agent': 'GoodReels/1.0' } }
-    )
-      .then((res) => res.ok ? res.json() : null)
-      .then((data) => {
-        if (data?.extract) {
-          fullExtractCache.current[articleId] = data.extract;
-        }
+    fetchFullArticle(articleTitle)
+      .then((text) => {
+        if (text) fullExtractCache.current[articleId] = text;
       })
-      .catch(() => {})
       .finally(() => { fetchingArticle.current[articleId] = false; });
   }, [articleId, articleTitle]);
 
@@ -72,7 +90,7 @@ export function useAIChat(
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             articleTitle,
-            articleExtract: bestExtract.slice(0, 4000),
+            articleExtract: bestExtract,
             messages: contextMessages.map((m) => ({
               role: m.role,
               text: m.text,
@@ -108,7 +126,7 @@ export function useAIChat(
                 }));
               }
             } catch {
-              // skip malformed chunks
+              // skip
             }
           }
         }
@@ -125,11 +143,7 @@ export function useAIChat(
           ...prev,
           [articleId]: (prev[articleId] || []).map((m) =>
             m.id === aiMsg.id
-              ? {
-                  ...m,
-                  text: m.text || 'Gagal mendapat jawaban. Coba lagi.',
-                  isStreaming: false,
-                }
+              ? { ...m, text: m.text || 'Gagal mendapat jawaban. Coba lagi.', isStreaming: false }
               : m
           ),
         }));

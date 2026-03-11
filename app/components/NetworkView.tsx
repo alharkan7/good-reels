@@ -17,6 +17,7 @@ export default function NetworkView({
 }: NetworkViewProps) {
   const { graphData, isLoading, totalLinks } = useNetworkGraph(articleTitle);
   const containerRef = useRef<HTMLDivElement>(null);
+  const graphRef = useRef<Record<string, unknown> | null>(null);
   const [ForceGraph, setForceGraph] = useState<React.ComponentType<Record<string, unknown>> | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
@@ -38,6 +39,21 @@ export default function NetworkView({
     return () => window.removeEventListener('resize', update);
   }, []);
 
+  useEffect(() => {
+    const fg = graphRef.current as Record<string, (...args: unknown[]) => unknown> | null;
+    if (!fg) return;
+    if (typeof fg.d3Force === 'function') {
+      const charge = fg.d3Force('charge') as Record<string, (v: number) => unknown> | null;
+      if (charge && typeof charge.strength === 'function') {
+        charge.strength(-300);
+      }
+      const link = fg.d3Force('link') as Record<string, (v: number) => unknown> | null;
+      if (link && typeof link.distance === 'function') {
+        link.distance(80);
+      }
+    }
+  }, [graphData]);
+
   const displayNodeCount = graphData?.nodes.length ?? 0;
   const extraLinks = totalLinks > 40 ? totalLinks - 40 : 0;
 
@@ -50,7 +66,7 @@ export default function NetworkView({
   }, [graphData]);
 
   const nodeCanvasObject = useCallback(
-    (node: Record<string, unknown>, ctx: CanvasRenderingContext2D) => {
+    (node: Record<string, unknown>, ctx: CanvasRenderingContext2D, globalScale: number) => {
       const x = node.x as number;
       const y = node.y as number;
       const label = (node.name as string) || '';
@@ -62,24 +78,41 @@ export default function NetworkView({
       ctx.fillStyle = isCenter ? '#FF6B35' : '#4ECDC4';
       ctx.fill();
 
-      const fontSize = radius * 1.4;
+      const baseFontSize = isCenter ? 5 : 3.5;
+      const fontSize = Math.max(baseFontSize, Math.min(baseFontSize, 14 / globalScale));
       ctx.font = `${isCenter ? 'bold ' : ''}${fontSize}px Sans-Serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.fillText(label, x, y + radius + 1);
+
+      const maxChars = Math.max(10, Math.floor(40 / Math.max(globalScale * 0.3, 0.5)));
+      const truncated = label.length > maxChars ? label.slice(0, maxChars) + '…' : label;
+
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      const metrics = ctx.measureText(truncated);
+      const pad = 1;
+      ctx.fillRect(
+        x - metrics.width / 2 - pad,
+        y + radius + 1,
+        metrics.width + pad * 2,
+        fontSize + pad
+      );
+
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillText(truncated, x, y + radius + 1.5);
     },
     []
   );
+
+  const handleRef = useCallback((ref: unknown) => {
+    graphRef.current = ref as Record<string, unknown>;
+  }, []);
 
   if (isLoading || !ForceGraph) return <NetworkLoader />;
 
   if (!graphData || graphData.nodes.length <= 1) {
     return (
       <div className="fixed inset-0 z-40 bg-black flex flex-col items-center justify-center gap-4 fade-in">
-        <p className="text-white/60 text-sm">
-          Artikel ini tidak memiliki tautan
-        </p>
+        <p className="text-white/60 text-sm">Artikel ini tidak memiliki tautan</p>
         <button
           onClick={onBack}
           className="px-4 py-2 rounded-full text-sm font-medium text-black"
@@ -98,6 +131,7 @@ export default function NetworkView({
       style={{ maxWidth: dimensions.width > 430 ? '430px' : '100%', margin: '0 auto' }}
     >
       <ForceGraph
+        ref={handleRef}
         graphData={graphDataMemo}
         width={Math.min(dimensions.width, 430)}
         height={dimensions.height}
@@ -111,9 +145,12 @@ export default function NetworkView({
           ctx.fillStyle = color;
           ctx.fill();
         }}
-        linkColor={() => 'rgba(255,255,255,0.15)'}
-        linkWidth={1}
+        linkColor={() => 'rgba(255,255,255,0.12)'}
+        linkWidth={0.5}
         backgroundColor="#000000"
+        d3AlphaDecay={0.02}
+        d3VelocityDecay={0.3}
+        warmupTicks={50}
         onNodeClick={(node: Record<string, unknown>) => {
           if (!node.isCenter) {
             onNodeClick(node.name as string);
@@ -123,16 +160,12 @@ export default function NetworkView({
 
       <div className="absolute bottom-6 left-4 right-4 z-10">
         <div className="bg-black/60 backdrop-blur-md rounded-xl p-4">
-          <p className="text-white font-semibold text-sm mb-1">
-            {articleTitle}
-          </p>
+          <p className="text-white font-semibold text-sm mb-1">{articleTitle}</p>
           <p className="text-white/50 text-xs">
             {displayNodeCount - 1} tautan ditampilkan
             {extraLinks > 0 ? ` (+${extraLinks} lainnya)` : ''}
           </p>
-          <p className="text-white/40 text-xs mt-2">
-            Ketuk node untuk menjelajahi artikel terkait
-          </p>
+          <p className="text-white/40 text-xs mt-2">Ketuk node untuk menjelajahi artikel terkait</p>
         </div>
       </div>
     </div>

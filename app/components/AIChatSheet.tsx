@@ -97,7 +97,7 @@ export default function AIChatSheet({
         className={`absolute bottom-0 left-0 right-0 rounded-t-2xl overflow-hidden flex flex-col ${closing ? 'sheet-exit' : 'sheet-enter'}`}
         style={{
           background: 'var(--sheet-bg)',
-          height: '50vh',
+          height: '78vh',
           maxWidth: '430px',
           margin: '0 auto',
         }}

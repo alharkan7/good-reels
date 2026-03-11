@@ -74,13 +74,15 @@ export default function ReelCard({
 
       <div className="absolute inset-0 reel-overlay-gradient z-[5]" />
 
+      {/* Action bar — FIXED position, does not move */}
       <div
         className="absolute right-3 z-20 flex flex-col items-center gap-5"
-        style={{ bottom: effectiveExpanded ? '55dvh' : 'calc(25dvh + 16px)', transition: 'bottom 300ms ease' }}
+        style={{ bottom: 'calc(25dvh + 16px)' }}
       >
         {actionBar}
       </div>
 
+      {/* Bottom content area */}
       <div
         className="absolute bottom-0 left-0 right-0 z-10 px-5 pr-16 transition-all duration-300 ease-out"
         style={{ height: effectiveExpanded ? '55dvh' : '28dvh' }}
@@ -95,18 +97,12 @@ export default function ReelCard({
 
           {effectiveExpanded ? (
             <div
-              className="flex-1 min-h-0 overflow-y-auto no-scrollbar mt-1"
-              onClick={(e) => e.stopPropagation()}
+              className="flex-1 min-h-0 overflow-y-auto no-scrollbar mt-1 cursor-pointer"
+              onClick={handleTextTap}
             >
               <p className="text-[15px] text-white/80 leading-relaxed pb-2">
                 {article.summary}
               </p>
-              <button
-                onClick={handleTextTap}
-                className="text-xs text-white/50 mb-2"
-              >
-                tampilkan lebih sedikit
-              </button>
             </div>
           ) : (
             <p
@@ -115,9 +111,6 @@ export default function ReelCard({
               onClick={handleTextTap}
             >
               {article.summary}
-              {isTruncated && (
-                <span className="text-white/50 ml-1">...lainnya</span>
-              )}
             </p>
           )}
 

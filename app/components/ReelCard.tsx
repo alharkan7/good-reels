@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import { Article, Track, ReelStyle } from '@/app/lib/types';
 import { MOTION_PRESETS, FILTER_PRESETS } from '@/app/lib/variety';
-import ReelOverlay from './ReelOverlay';
 import MusicIndicator from './MusicIndicator';
 
 interface ReelCardProps {
@@ -12,6 +11,8 @@ interface ReelCardProps {
   track: Track | null;
   isActive: boolean;
   isMusicPlaying: boolean;
+  isMuted: boolean;
+  onToggleMute: () => void;
   isPriority: boolean;
   actionBar: React.ReactNode;
 }
@@ -22,6 +23,8 @@ export default function ReelCard({
   track,
   isActive,
   isMusicPlaying,
+  isMuted,
+  onToggleMute,
   isPriority,
   actionBar,
 }: ReelCardProps) {
@@ -30,7 +33,6 @@ export default function ReelCard({
 
   return (
     <div className="reel-card bg-black">
-      {/* Background image with Ken Burns + filter */}
       <div
         className="reel-image-container"
         style={{
@@ -51,23 +53,49 @@ export default function ReelCard({
         />
       </div>
 
-      {/* Gradient overlay for text legibility */}
       <div className="absolute inset-0 reel-overlay-gradient z-[5]" />
 
-      {/* Action bar on right */}
-      <div className="absolute right-3 bottom-32 z-20 flex flex-col items-center gap-5">
+      <div className="absolute right-3 z-20 flex flex-col items-center gap-5"
+        style={{ bottom: 'calc(25dvh + 16px)' }}
+      >
         {actionBar}
       </div>
 
-      {/* Text overlay at bottom */}
-      <div className="relative z-10 h-full flex flex-col justify-end">
-        <ReelOverlay
-          title={article.title}
-          summary={article.summary}
-          articleUrl={article.articleUrl}
-        />
-        <div className="px-5 pb-5">
-          <MusicIndicator track={track} isPlaying={isActive && isMusicPlaying} />
+      {/* Bottom content: title + summary + wiki link + music */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 px-5 pb-4 pr-16"
+        style={{ height: '28dvh' }}
+      >
+        <div className="h-full flex flex-col justify-end">
+          <h2
+            className="text-2xl font-bold text-white mb-1.5 leading-tight drop-shadow-lg"
+            style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}
+          >
+            {article.title}
+          </h2>
+          <p className="text-[15px] text-white/80 line-clamp-3 mb-3 leading-relaxed">
+            {article.summary}
+          </p>
+          <a
+            href={article.articleUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium text-white/90 transition-colors self-start mb-2"
+            style={{ background: 'var(--accent-chip)' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+            Baca di Wikipedia
+          </a>
+          <MusicIndicator
+            track={track}
+            isPlaying={isActive && isMusicPlaying}
+            isMuted={isMuted}
+            onToggleMute={onToggleMute}
+          />
         </div>
       </div>
     </div>

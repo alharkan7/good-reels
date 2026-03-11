@@ -48,11 +48,11 @@ export default function Home() {
           title: data.title,
           summary: data.extract || '',
           imageUrl:
-            data.originalimage?.source ||
             data.thumbnail?.source ||
+            data.originalimage?.source ||
             '',
-          imageWidth: data.originalimage?.width || 800,
-          imageHeight: data.originalimage?.height || 600,
+          imageWidth: data.thumbnail?.width || 800,
+          imageHeight: data.thumbnail?.height || 600,
           articleUrl: data.content_urls?.mobile?.page || '',
           extract: data.extract || '',
         };

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Track, Article } from '@/app/lib/types';
+import { FALLBACK_TRACKS } from '@/app/lib/fallback-tracks';
 import { assignReelStyle } from '@/app/lib/variety';
 import { useArticleBuffer } from '@/app/hooks/useArticleBuffer';
 import { useBackgroundMusic } from '@/app/hooks/useBackgroundMusic';
@@ -10,7 +11,6 @@ import { usePullToRefresh } from '@/app/hooks/usePullToRefresh';
 import { useAIChat } from '@/app/hooks/useAIChat';
 import ReelCard from './ReelCard';
 import ActionBar from './ActionBar';
-import CommentSheet from './CommentSheet';
 import AIChatSheet from './AIChatSheet';
 import PullToRefresh from './PullToRefresh';
 import LoadingReel from './LoadingReel';
@@ -31,8 +31,7 @@ export default function ReelsFeed({
     refresh,
   } = useArticleBuffer();
 
-  const [tracks, setTracks] = useState<Track[]>([]);
-  const [commentSheetOpen, setCommentSheetOpen] = useState(false);
+  const [tracks, setTracks] = useState<Track[]>(FALLBACK_TRACKS);
   const [chatSheetOpen, setChatSheetOpen] = useState(false);
 
   const feedRef = useRef<HTMLDivElement>(null);
@@ -44,19 +43,17 @@ export default function ReelsFeed({
     isBookmarked,
     toggleBookmark,
     getComments,
-    addComment,
     isMuted,
     toggleMute,
   } = useLocalInteractions();
 
   const currentArticle = articles[currentIndex];
 
-  // Fetch tracks
   useEffect(() => {
     fetch('/api/tracks?count=20')
       .then((res) => res.json())
       .then((data: Track[]) => {
-        if (Array.isArray(data)) setTracks(data);
+        if (Array.isArray(data) && data.length > 0) setTracks(data);
       })
       .catch(() => {});
   }, []);
@@ -98,7 +95,6 @@ export default function ReelsFeed({
   const { pullDistance, isRefreshing, handlers: pullHandlers } =
     usePullToRefresh(feedRef, refresh);
 
-  // Track current visible reel via Intersection Observer
   useEffect(() => {
     if (!feedRef.current) return;
     const observer = new IntersectionObserver(
@@ -122,7 +118,6 @@ export default function ReelsFeed({
     return () => observer.disconnect();
   }, [articles.length, setCurrentIndex]);
 
-  // Notify parent of article change
   useEffect(() => {
     if (currentArticle) {
       onArticleChange(currentArticle);
@@ -141,7 +136,7 @@ export default function ReelsFeed({
         await navigator.clipboard.writeText(currentArticle.articleUrl);
       }
     } catch {
-      // user cancelled share
+      // user cancelled
     }
   }, [currentArticle]);
 
@@ -169,13 +164,15 @@ export default function ReelsFeed({
             : null;
 
         return (
-          <div key={article.id} data-index={index}>
+          <div key={`${article.id}-${index}`} data-index={index}>
             <ReelCard
               article={article}
               style={style}
               track={track}
               isActive={index === currentIndex}
               isMusicPlaying={isPlaying && !isMuted}
+              isMuted={isMuted}
+              onToggleMute={toggleMute}
               isPriority={index <= currentIndex + 1}
               actionBar={
                 <ActionBar
@@ -184,13 +181,10 @@ export default function ReelsFeed({
                   likeCount={getLikeCount(article.id)}
                   isBookmarked={isBookmarked(article.id)}
                   commentCount={getComments(article.id).length}
-                  isMuted={isMuted}
                   onLike={() => toggleLike(article.id)}
                   onBookmark={() => toggleBookmark(article.id)}
-                  onComment={() => setCommentSheetOpen(true)}
-                  onShare={handleShare}
-                  onMuteToggle={toggleMute}
                   onAIChat={() => setChatSheetOpen(true)}
+                  onShare={handleShare}
                   articleTitle={article.title}
                   articleUrl={article.articleUrl}
                 />
@@ -200,19 +194,8 @@ export default function ReelsFeed({
         );
       })}
 
-      {(isLoading || articles.length === 0) && <LoadingReel />}
+      {articles.length === 0 && isLoading && <LoadingReel />}
 
-      {/* Comment Sheet */}
-      {currentArticle && (
-        <CommentSheet
-          isOpen={commentSheetOpen}
-          onClose={() => setCommentSheetOpen(false)}
-          comments={getComments(currentArticle.id)}
-          onAddComment={(text) => addComment(currentArticle.id, text)}
-        />
-      )}
-
-      {/* AI Chat Sheet */}
       {currentArticle && (
         <AIChatSheet
           isOpen={chatSheetOpen}

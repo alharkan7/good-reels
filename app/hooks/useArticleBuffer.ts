@@ -2,28 +2,70 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Article } from '@/app/lib/types';
+import preloadedRaw from '@/app/lib/preloaded-articles.json';
 
+const PRELOADED: Article[] = preloadedRaw as Article[];
 const INITIAL_BATCH = 5;
 const PREFETCH_BATCH = 3;
 const BUFFER_THRESHOLD = 3;
 
+function shuffled<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function getPreloadedBatch(count: number, exclude: Set<string>): Article[] {
+  const pool = PRELOADED.filter((a) => !exclude.has(a.id));
+  const picked = shuffled(pool.length > 0 ? pool : PRELOADED).slice(0, count);
+  return picked;
+}
+
 export function useArticleBuffer() {
-  const [articles, setArticles] = useState<Article[]>([]);
+  const [articles, setArticles] = useState<Article[]>(() =>
+    shuffled(PRELOADED).slice(0, INITIAL_BATCH)
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const isFetching = useRef(false);
+  const liveIds = useRef(new Set<string>());
+  const preloadedUsed = useRef(new Set<string>());
+  const stallTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  articles.forEach((a) => preloadedUsed.current.add(a.id));
 
   const fetchBatch = useCallback(async (count: number) => {
     if (isFetching.current) return;
     isFetching.current = true;
+    setIsLoading(true);
+
+    stallTimer.current = setTimeout(() => {
+      if (isFetching.current) {
+        const filler = getPreloadedBatch(count, preloadedUsed.current);
+        filler.forEach((a) => preloadedUsed.current.add(a.id));
+        setArticles((prev) => [...prev, ...filler]);
+      }
+    }, 4000);
+
     try {
       const res = await fetch(`/api/articles?count=${count}`);
       if (!res.ok) throw new Error('Failed to fetch articles');
       const newArticles: Article[] = await res.json();
-      setArticles((prev) => [...prev, ...newArticles]);
+      if (newArticles.length > 0) {
+        newArticles.forEach((a) => liveIds.current.add(a.id));
+        setArticles((prev) => [...prev, ...newArticles]);
+      }
     } catch (error) {
       console.error('Article fetch error:', error);
+      const filler = getPreloadedBatch(count, preloadedUsed.current);
+      filler.forEach((a) => preloadedUsed.current.add(a.id));
+      setArticles((prev) => [...prev, ...filler]);
     } finally {
+      if (stallTimer.current) clearTimeout(stallTimer.current);
+      stallTimer.current = null;
       isFetching.current = false;
       setIsLoading(false);
     }
@@ -31,7 +73,7 @@ export function useArticleBuffer() {
 
   useEffect(() => {
     const remaining = articles.length - currentIndex - 1;
-    if (remaining <= BUFFER_THRESHOLD && !isFetching.current && articles.length > 0) {
+    if (remaining <= BUFFER_THRESHOLD && !isFetching.current) {
       fetchBatch(PREFETCH_BATCH);
     }
   }, [currentIndex, articles.length, fetchBatch]);
@@ -41,11 +83,13 @@ export function useArticleBuffer() {
   }, [fetchBatch]);
 
   const refresh = useCallback(async () => {
-    setArticles([]);
+    preloadedUsed.current.clear();
+    const fresh = shuffled(PRELOADED).slice(0, INITIAL_BATCH);
+    fresh.forEach((a) => preloadedUsed.current.add(a.id));
+    setArticles(fresh);
     setCurrentIndex(0);
-    setIsLoading(true);
     isFetching.current = false;
-    await fetchBatch(INITIAL_BATCH);
+    fetchBatch(INITIAL_BATCH);
   }, [fetchBatch]);
 
   const prependArticle = useCallback((article: Article) => {

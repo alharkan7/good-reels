@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { useNetworkGraph } from '@/app/hooks/useNetworkGraph';
 import NetworkLoader from './NetworkLoader';
 
@@ -21,7 +21,7 @@ export default function NetworkView({
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
   useEffect(() => {
-    import('react-force-graph-3d').then((mod) => {
+    import('react-force-graph-2d').then((mod) => {
       setForceGraph(() => mod.default);
     });
   }, []);
@@ -48,6 +48,29 @@ export default function NetworkView({
       links: graphData.links.map((l) => ({ ...l })),
     };
   }, [graphData]);
+
+  const nodeCanvasObject = useCallback(
+    (node: Record<string, unknown>, ctx: CanvasRenderingContext2D, globalScale: number) => {
+      const x = node.x as number;
+      const y = node.y as number;
+      const label = (node.name as string) || '';
+      const isCenter = node.isCenter as boolean;
+      const radius = isCenter ? 8 : 5;
+
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, 2 * Math.PI);
+      ctx.fillStyle = isCenter ? '#FF6B35' : '#4ECDC4';
+      ctx.fill();
+
+      const fontSize = Math.max(12 / globalScale, 2);
+      ctx.font = `${isCenter ? 'bold ' : ''}${fontSize}px Sans-Serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillText(label, x, y + radius + 2);
+    },
+    []
+  );
 
   if (isLoading || !ForceGraph) return <NetworkLoader />;
 
@@ -78,12 +101,16 @@ export default function NetworkView({
         graphData={graphDataMemo}
         width={Math.min(dimensions.width, 430)}
         height={dimensions.height}
-        nodeLabel="name"
-        nodeColor={(node: Record<string, unknown>) =>
-          node.isCenter ? '#FF6B35' : '#4ECDC4'
-        }
-        nodeRelSize={6}
-        nodeVal={(node: Record<string, unknown>) => (node.isCenter ? 3 : 1)}
+        nodeCanvasObject={nodeCanvasObject}
+        nodePointerAreaPaint={(node: Record<string, unknown>, color: string, ctx: CanvasRenderingContext2D) => {
+          const x = node.x as number;
+          const y = node.y as number;
+          const r = (node.isCenter as boolean) ? 10 : 7;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, 2 * Math.PI);
+          ctx.fillStyle = color;
+          ctx.fill();
+        }}
         linkColor={() => 'rgba(255,255,255,0.15)'}
         linkWidth={1}
         backgroundColor="#000000"
@@ -92,11 +119,8 @@ export default function NetworkView({
             onNodeClick(node.name as string);
           }
         }}
-        enableNavigationControls={true}
-        showNavInfo={false}
       />
 
-      {/* Info overlay */}
       <div className="absolute bottom-6 left-4 right-4 z-10">
         <div className="bg-black/60 backdrop-blur-md rounded-xl p-4">
           <p className="text-white font-semibold text-sm mb-1">

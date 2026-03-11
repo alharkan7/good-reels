@@ -45,11 +45,11 @@ export default function NetworkView({
     if (typeof fg.d3Force === 'function') {
       const charge = fg.d3Force('charge') as Record<string, (v: number) => unknown> | null;
       if (charge && typeof charge.strength === 'function') {
-        charge.strength(-300);
+        charge.strength(-150);
       }
       const link = fg.d3Force('link') as Record<string, (v: number) => unknown> | null;
       if (link && typeof link.distance === 'function') {
-        link.distance(80);
+        link.distance(45);
       }
     }
   }, [graphData]);

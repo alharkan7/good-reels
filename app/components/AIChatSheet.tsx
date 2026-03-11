@@ -3,49 +3,93 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { ChatMessage } from '@/app/lib/types';
 
-function renderMarkdown(text: string): React.ReactNode[] {
-  const lines = text.split('\n');
+function inlineMarkdown(text: string, lineKey: string): React.ReactNode[] {
   const result: React.ReactNode[] = [];
+  let remaining = text;
+  let ki = 0;
 
-  lines.forEach((line, li) => {
-    if (li > 0) result.push(<br key={`br-${li}`} />);
+  while (remaining.length > 0) {
+    const codeMatch = remaining.match(/`(.+?)`/);
+    const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
+    const italicMatch = remaining.match(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/);
 
-    const parts: React.ReactNode[] = [];
-    let remaining = line;
-    let ki = 0;
+    type Match = { idx: number; len: number; node: React.ReactNode };
+    const candidates: Match[] = [];
+    if (codeMatch?.index !== undefined)
+      candidates.push({ idx: codeMatch.index, len: codeMatch[0].length, node: <code key={`c-${lineKey}-${ki++}`} className="bg-white/10 px-1 py-0.5 rounded text-[13px]">{codeMatch[1]}</code> });
+    if (boldMatch?.index !== undefined)
+      candidates.push({ idx: boldMatch.index, len: boldMatch[0].length, node: <strong key={`b-${lineKey}-${ki++}`}>{boldMatch[1]}</strong> });
+    if (italicMatch?.index !== undefined)
+      candidates.push({ idx: italicMatch.index, len: italicMatch[0].length, node: <em key={`i-${lineKey}-${ki++}`}>{italicMatch[1]}</em> });
 
-    while (remaining.length > 0) {
-      const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
-      if (boldMatch && boldMatch.index !== undefined) {
-        if (boldMatch.index > 0) {
-          parts.push(remaining.slice(0, boldMatch.index));
-        }
-        parts.push(<strong key={`b-${li}-${ki++}`}>{boldMatch[1]}</strong>);
-        remaining = remaining.slice(boldMatch.index + boldMatch[0].length);
-      } else {
-        const italicMatch = remaining.match(/\*(.+?)\*/);
-        if (italicMatch && italicMatch.index !== undefined) {
-          if (italicMatch.index > 0) {
-            parts.push(remaining.slice(0, italicMatch.index));
-          }
-          parts.push(<em key={`i-${li}-${ki++}`}>{italicMatch[1]}</em>);
-          remaining = remaining.slice(italicMatch.index + italicMatch[0].length);
-        } else {
-          parts.push(remaining);
-          remaining = '';
-        }
-      }
+    if (candidates.length === 0) {
+      result.push(remaining);
+      break;
     }
 
-    result.push(...parts);
-  });
+    candidates.sort((a, b) => a.idx - b.idx);
+    const best = candidates[0];
+    if (best.idx > 0) result.push(remaining.slice(0, best.idx));
+    result.push(best.node);
+    remaining = remaining.slice(best.idx + best.len);
+  }
 
   return result;
 }
 
+function renderMarkdown(text: string): React.ReactNode[] {
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let li = 0;
+
+  while (li < lines.length) {
+    const line = lines[li];
+
+    if (line.match(/^#{1,3}\s+/)) {
+      const content = line.replace(/^#{1,3}\s+/, '');
+      elements.push(<p key={`h-${li}`} className="font-bold mt-2 mb-1">{inlineMarkdown(content, `h${li}`)}</p>);
+      li++;
+      continue;
+    }
+
+    if (line.match(/^[\*\-]\s+/)) {
+      const items: React.ReactNode[] = [];
+      while (li < lines.length && lines[li].match(/^[\*\-]\s+/)) {
+        const content = lines[li].replace(/^[\*\-]\s+/, '');
+        items.push(<li key={`ul-${li}`} className="ml-4 list-disc">{inlineMarkdown(content, `ul${li}`)}</li>);
+        li++;
+      }
+      elements.push(<ul key={`uls-${li}`} className="my-1 space-y-0.5">{items}</ul>);
+      continue;
+    }
+
+    if (line.match(/^\d+\.\s+/)) {
+      const items: React.ReactNode[] = [];
+      while (li < lines.length && lines[li].match(/^\d+\.\s+/)) {
+        const content = lines[li].replace(/^\d+\.\s+/, '');
+        items.push(<li key={`ol-${li}`} className="ml-4 list-decimal">{inlineMarkdown(content, `ol${li}`)}</li>);
+        li++;
+      }
+      elements.push(<ol key={`ols-${li}`} className="my-1 space-y-0.5">{items}</ol>);
+      continue;
+    }
+
+    if (line.trim() === '') {
+      elements.push(<div key={`sp-${li}`} className="h-2" />);
+      li++;
+      continue;
+    }
+
+    elements.push(<span key={`p-${li}`}>{inlineMarkdown(line, `p${li}`)}<br /></span>);
+    li++;
+  }
+
+  return elements;
+}
+
 function MarkdownText({ text }: { text: string }) {
   const rendered = useMemo(() => renderMarkdown(text), [text]);
-  return <>{rendered}</>;
+  return <div className="markdown-content">{rendered}</div>;
 }
 
 interface AIChatSheetProps {

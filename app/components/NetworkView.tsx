@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import { useLanguage } from '@/app/contexts/LanguageContext';
 import { useNetworkGraph } from '@/app/hooks/useNetworkGraph';
 import NetworkLoader from './NetworkLoader';
 
@@ -15,6 +16,7 @@ export default function NetworkView({
   onNodeClick,
   onBack,
 }: NetworkViewProps) {
+  const { lang } = useLanguage();
   const { graphData, isLoading, totalLinks } = useNetworkGraph(articleTitle);
   const containerRef = useRef<HTMLDivElement>(null);
   const graphRef = useRef<Record<string, unknown> | null>(null);
@@ -112,13 +114,13 @@ export default function NetworkView({
   if (!graphData || graphData.nodes.length <= 1) {
     return (
       <div className="fixed inset-0 z-40 bg-black flex flex-col items-center justify-center gap-4 fade-in">
-        <p className="text-white/60 text-sm">Artikel ini tidak memiliki tautan</p>
+        <p className="text-white/60 text-sm">{lang === 'id' ? 'Artikel ini tidak memiliki tautan' : 'This article has no links'}</p>
         <button
           onClick={onBack}
           className="px-4 py-2 rounded-full text-sm font-medium text-black"
           style={{ background: 'var(--toggle-active)' }}
         >
-          Kembali ke Reels
+          {lang === 'id' ? 'Kembali ke Reels' : 'Back to Reels'}
         </button>
       </div>
     );
@@ -162,10 +164,10 @@ export default function NetworkView({
         <div className="bg-black/60 backdrop-blur-md rounded-xl p-4">
           <p className="text-white font-semibold text-sm mb-1">{articleTitle}</p>
           <p className="text-white/50 text-xs">
-            {displayNodeCount - 1} tautan ditampilkan
-            {extraLinks > 0 ? ` (+${extraLinks} lainnya)` : ''}
+            {displayNodeCount - 1} {lang === 'id' ? 'tautan ditampilkan' : 'links displayed'}
+            {extraLinks > 0 ? (lang === 'id' ? ` (+${extraLinks} lainnya)` : ` (+${extraLinks} more)`) : ''}
           </p>
-          <p className="text-white/40 text-xs mt-2">Ketuk node untuk menjelajahi artikel terkait</p>
+          <p className="text-white/40 text-xs mt-2">{lang === 'id' ? 'Ketuk node untuk menjelajahi artikel terkait' : 'Tap a node to explore related articles'}</p>
         </div>
       </div>
     </div>

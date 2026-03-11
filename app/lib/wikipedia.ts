@@ -1,8 +1,7 @@
 import { WikipediaSummary } from './types';
 
-const WIKI_API = 'https://id.wikipedia.org/api/rest_v1/page/random/summary';
-
-export async function fetchRandomArticle(): Promise<WikipediaSummary | null> {
+export async function fetchRandomArticle(lang: 'id' | 'en' = 'id'): Promise<WikipediaSummary | null> {
+  const WIKI_API = `https://${lang}.wikipedia.org/api/rest_v1/page/random/summary`;
   const response = await fetch(WIKI_API, {
     headers: {
       'Api-User-Agent': 'GoodReels/1.0 (good-reels prototype)',
@@ -20,9 +19,9 @@ export async function fetchRandomArticle(): Promise<WikipediaSummary | null> {
   return data;
 }
 
-export async function fetchArticleSummary(title: string): Promise<WikipediaSummary | null> {
+export async function fetchArticleSummary(title: string, lang: 'id' | 'en' = 'id'): Promise<WikipediaSummary | null> {
   const response = await fetch(
-    `https://id.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+    `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
     {
       headers: {
         'Api-User-Agent': 'GoodReels/1.0 (good-reels prototype)',

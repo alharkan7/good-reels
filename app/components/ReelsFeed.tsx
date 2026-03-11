@@ -21,11 +21,13 @@ interface ReelsFeedProps {
   onLayoutToggle: () => void;
   onArticleChange: (article: Article) => void;
   injectedArticle?: Article | null;
+  lang: 'id' | 'en';
 }
 
 export default function ReelsFeed({
   onArticleChange,
   injectedArticle,
+  lang,
 }: ReelsFeedProps) {
   const {
     articles,
@@ -34,7 +36,7 @@ export default function ReelsFeed({
     isLoading,
     refresh,
     prependArticle,
-  } = useArticleBuffer();
+  } = useArticleBuffer(lang);
 
   const injectedRef = useRef<string | null>(null);
   useEffect(() => {

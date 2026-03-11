@@ -24,6 +24,8 @@ function transformToArticle(summary: WikipediaSummary): Article {
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const count = Math.min(parseInt(url.searchParams.get('count') || '5'), 10);
+  const langParam = url.searchParams.get('lang');
+  const lang = langParam === 'en' ? 'en' : 'id';
   const articles: Article[] = [];
   let attempts = 0;
   const MAX_ATTEMPTS = count * 3;
@@ -31,7 +33,7 @@ export async function GET(request: NextRequest) {
   while (articles.length < count && attempts < MAX_ATTEMPTS) {
     const batchSize = Math.min(5, count - articles.length + 2);
     const candidates = await Promise.allSettled(
-      Array.from({ length: batchSize }, () => fetchRandomArticle())
+      Array.from({ length: batchSize }, () => fetchRandomArticle(lang))
     );
 
     for (const r of candidates) {

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { ChatMessage } from '@/app/lib/types';
+import { useLanguage } from '@/app/contexts/LanguageContext';
 
 function inlineMarkdown(text: string, lineKey: string): React.ReactNode[] {
   const result: React.ReactNode[] = [];
@@ -107,6 +108,7 @@ export default function AIChatSheet({
   isStreaming,
   onSendMessage,
 }: AIChatSheetProps) {
+  const { lang } = useLanguage();
   const [text, setText] = useState('');
   const [closing, setClosing] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
@@ -152,7 +154,7 @@ export default function AIChatSheet({
           <div className="flex items-center gap-2">
             <span style={{ color: 'var(--ai-sparkle)' }}>✨</span>
             <h3 className="text-base font-semibold text-white">
-              Tanya AI tentang artikel ini
+              {lang === 'id' ? 'Tanya AI tentang artikel ini' : 'Ask AI about this article'}
             </h3>
           </div>
           <button
@@ -184,7 +186,7 @@ export default function AIChatSheet({
             <div className="text-center mt-8">
               <p className="text-2xl mb-2">🤔</p>
               <p className="text-white/50 text-sm">
-                Tanya apa saja tentang artikel ini!
+                {lang === 'id' ? 'Tanya apa saja tentang artikel ini!' : 'Ask anything about this article!'}
               </p>
             </div>
           ) : (
@@ -223,7 +225,7 @@ export default function AIChatSheet({
             value={text}
             onChange={(e) => setText(e.target.value.slice(0, 500))}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            placeholder="Ketik pertanyaan..."
+            placeholder={lang === 'id' ? 'Ketik pertanyaan...' : 'Type a question...'}
             disabled={isStreaming}
             className="flex-1 bg-white/10 text-white text-sm px-4 py-2.5 rounded-full outline-none placeholder:text-white/40 focus:ring-1 focus:ring-white/20 disabled:opacity-50"
           />

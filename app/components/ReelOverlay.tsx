@@ -1,5 +1,7 @@
 'use client';
 
+import { useLanguage } from '@/app/contexts/LanguageContext';
+
 interface ReelOverlayProps {
   title: string;
   summary: string;
@@ -11,6 +13,7 @@ export default function ReelOverlay({
   summary,
   articleUrl,
 }: ReelOverlayProps) {
+  const { lang } = useLanguage();
   return (
     <div className="absolute bottom-0 left-0 right-16 z-10 flex flex-col justify-end"
       style={{ height: '30%', padding: '0 20px 20px 20px' }}
@@ -42,7 +45,7 @@ export default function ReelOverlay({
           <polyline points="15 3 21 3 21 9" />
           <line x1="10" y1="14" x2="21" y2="3" />
         </svg>
-        Baca di Wikipedia
+        {lang === 'id' ? 'Baca di Wikipedia' : 'Read on Wikipedia'}
       </a>
     </div>
   );

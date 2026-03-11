@@ -1,12 +1,15 @@
 'use client';
 
+import { useLanguage } from '@/app/contexts/LanguageContext';
+
 export default function LoadingReel() {
+  const { lang } = useLanguage();
   return (
     <div className="reel-card flex items-center justify-center bg-black">
       <div className="absolute inset-0 skeleton-shimmer" />
       <div className="relative z-10 flex flex-col items-center gap-4">
         <div className="w-12 h-12 border-2 border-white/20 border-t-white/80 rounded-full ptr-spinner" />
-        <p className="text-white/60 text-sm">Memuat artikel...</p>
+        <p className="text-white/60 text-sm">{lang === 'id' ? 'Memuat artikel...' : 'Loading article...'}</p>
       </div>
       <div className="absolute bottom-0 left-0 right-0 p-6 space-y-3">
         <div className="h-5 w-3/4 rounded bg-white/10 skeleton-shimmer" />

@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Article, Track, ReelStyle } from '@/app/lib/types';
 import { MOTION_PRESETS, FILTER_PRESETS } from '@/app/lib/variety';
 import MusicIndicator from './MusicIndicator';
+import { useLanguage } from '@/app/contexts/LanguageContext';
 
 interface ReelCardProps {
   article: Article;
@@ -34,6 +35,7 @@ export default function ReelCard({
   const [expanded, setExpanded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
   const textRef = useRef<HTMLParagraphElement>(null);
+  const { lang } = useLanguage();
 
   useEffect(() => {
     if (textRef.current) {
@@ -141,7 +143,7 @@ export default function ReelCard({
               <polyline points="15 3 21 3 21 9" />
               <line x1="10" y1="14" x2="21" y2="3" />
             </svg>
-            Baca di Wikipedia
+            {lang === 'id' ? 'Baca di Wikipedia' : 'Read on Wikipedia'}
           </a>
           <MusicIndicator
             track={track}

@@ -1,6 +1,9 @@
 'use client';
 
+import { useLanguage } from '@/app/contexts/LanguageContext';
+
 export default function NetworkLoader() {
+  const { lang } = useLanguage();
   return (
     <div className="fixed inset-0 z-40 bg-black flex flex-col items-center justify-center gap-6 fade-in">
       <div className="relative w-20 h-20">
@@ -44,7 +47,7 @@ export default function NetworkLoader() {
           })}
         </svg>
       </div>
-      <p className="text-white/60 text-sm">Memuat jaringan artikel...</p>
+      <p className="text-white/60 text-sm">{lang === 'id' ? 'Memuat jaringan artikel...' : 'Loading article network...'}</p>
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Track, Article } from '@/app/lib/types';
 import { FALLBACK_TRACKS } from '@/app/lib/fallback-tracks';
 import { assignReelStyle } from '@/app/lib/variety';
-import { useArticleBuffer } from '@/app/hooks/useArticleBuffer';
 import { useBackgroundMusic } from '@/app/hooks/useBackgroundMusic';
 import { useLocalInteractions } from '@/app/hooks/useLocalInteractions';
 import { usePullToRefresh } from '@/app/hooks/usePullToRefresh';
@@ -22,23 +21,27 @@ interface ReelsFeedProps {
   onArticleChange: (article: Article) => void;
   injectedArticle?: Article | null;
   lang: 'id' | 'en';
-  layoutMode: 'reels' | 'network';
+  layoutMode: 'reels' | 'network' | 'games';
+  articles: Article[];
+  currentIndex: number;
+  setCurrentIndex: (idx: number) => void;
+  isLoading: boolean;
+  refresh: () => Promise<void>;
+  prependArticle: (article: Article) => void;
 }
 
 export default function ReelsFeed({
   onArticleChange,
   injectedArticle,
-  lang,
   layoutMode,
+  articles,
+  currentIndex,
+  setCurrentIndex,
+  isLoading,
+  refresh,
+  prependArticle,
 }: ReelsFeedProps) {
-  const {
-    articles,
-    currentIndex,
-    setCurrentIndex,
-    isLoading,
-    refresh,
-    prependArticle,
-  } = useArticleBuffer(lang);
+
 
   const injectedRef = useRef<string | null>(null);
   useEffect(() => {
@@ -140,6 +143,15 @@ export default function ReelsFeed({
       onArticleChange(currentArticle);
     }
   }, [currentArticle, onArticleChange]);
+
+  useEffect(() => {
+    if (layoutMode === 'reels' && feedRef.current) {
+      const el = feedRef.current.querySelector(`[data-index="${currentIndex}"]`);
+      if (el) {
+        el.scrollIntoView();
+      }
+    }
+  }, [layoutMode, currentIndex]);
 
   const handleShare = useCallback(async () => {
     if (!currentArticle) return;

@@ -18,7 +18,8 @@ Swipe through full-screen article cards with cinematic Ken Burns image effects, 
 - **Expandable captions** — tap truncated summary to expand full text (Instagram-style); tap again to collapse
 - **Engagement** — like, bookmark, and share; all persisted in localStorage
 - **Pull-to-refresh** — elastic pull gesture at the top of the feed
-- **State preservation** — scroll position and article buffer persist when switching between Reels and Graph views
+- **AI Mini-Games** — transform any article into 1 of 5 playable, mobile-first touch games instantly synthesized by Gemini (Swipe Cards, Match Pairs, Timeline Sorter, Buckets, or Scratch-Off)
+- **State preservation** — scroll position and article buffer persist when switching between Reels, Graph, and Games views
 
 ## Tech Stack
 
@@ -87,7 +88,10 @@ app/
 │   ├── AIChatSheet.tsx       # AI chat bottom sheet with markdown rendering
 │   ├── MusicIndicator.tsx    # Tappable music chip (mute/unmute)
 │   ├── NetworkView.tsx       # 2D force-directed graph
-│   ├── LayoutToggle.tsx      # Reels / Graph mode toggle
+│   ├── GamesFeed.tsx         # Feed container for generative mini-games
+│   ├── GameCard.tsx          # Card shell handling game fetching and routing
+│   ├── games/                # Implementations of the 5 interactive touch game types
+│   ├── LayoutToggle.tsx      # Reels / Network / Games layout toggle
 │   ├── PullToRefresh.tsx     # Pull-to-refresh indicator
 │   ├── LoadingReel.tsx       # Skeleton loading placeholder
 │   └── NetworkLoader.tsx     # Graph loading animation
@@ -119,8 +123,9 @@ app/
 - **No content moderation** — Gemini moderation skipped for faster load times; articles are served directly from Wikipedia
 - **Thumbnail images** — low-res thumbnails used instead of full-resolution originals for faster rendering
 - **CSS-only visual effects** — Ken Burns motion and image filters are pure CSS animations (GPU-composited, zero JS overhead)
-- **Always-mounted Reels** — `ReelsFeed` stays mounted (hidden via CSS) when switching to Graph view, preserving scroll position and state
+- **Always-mounted Reels** — `ReelsFeed` stays mounted (hidden via CSS) when switching to Network or Games layout, preserving scroll position and state
 - **Background article fetch for AI** — `useAIChat` eagerly fetches the full Wikipedia article text via MediaWiki API and caches it; user can type immediately while fetch completes
+- **Generative Mini-Games** — The Games feed exclusively lazy-loads. It will only invoke the Gemini API to construct the `games/*` interactive JSON schemas once the layout is explicitly swapped to that mode, saving massive overhead
 - **2D graph** — switched from 3D to 2D (`react-force-graph-2d`) for better label readability and simpler interaction
 
 ## Documentation

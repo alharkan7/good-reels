@@ -23,6 +23,7 @@ export default function NetworkView({
   const [ForceGraph, setForceGraph] = useState<React.ComponentType<Record<string, unknown>> | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isDesktop, setIsDesktop] = useState(false);
+  const [hoveredNode, setHoveredNode] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     import('react-force-graph-2d').then((mod) => {
@@ -86,23 +87,33 @@ export default function NetworkView({
       const y = node.y as number;
       const label = (node.name as string) || '';
       const isCenter = node.isCenter as boolean;
-      const radius = isCenter ? 8 : 5;
+      const isHovered = hoveredNode === node;
+      const radius = isCenter ? (isHovered ? 10 : 8) : (isHovered ? 7 : 5);
+
+      // Add a subtle glow if hovered
+      if (isHovered) {
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+      }
 
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, 2 * Math.PI);
       ctx.fillStyle = isCenter ? '#FF6B35' : '#4ECDC4';
       ctx.fill();
 
+      // Reset shadow for text
+      ctx.shadowBlur = 0;
+
       const baseFontSize = isCenter ? 5 : 3.5;
       const fontSize = Math.max(baseFontSize, Math.min(baseFontSize, 14 / globalScale));
-      ctx.font = `${isCenter ? 'bold ' : ''}${fontSize}px Sans-Serif`;
+      ctx.font = `${(isCenter || isHovered) ? 'bold ' : ''}${fontSize}px Sans-Serif`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
 
       const maxChars = Math.max(10, Math.floor(40 / Math.max(globalScale * 0.3, 0.5)));
       const truncated = label.length > maxChars ? label.slice(0, maxChars) + '…' : label;
 
-      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillStyle = isHovered ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.6)';
       const metrics = ctx.measureText(truncated);
       const pad = 1;
       ctx.fillRect(
@@ -112,10 +123,10 @@ export default function NetworkView({
         fontSize + pad
       );
 
-      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.fillStyle = isHovered ? '#FFFFFF' : 'rgba(255,255,255,0.9)';
       ctx.fillText(truncated, x, y + radius + 1.5);
     },
-    []
+    [hoveredNode]
   );
 
   const handleRef = useCallback((ref: unknown) => {
@@ -164,7 +175,9 @@ export default function NetworkView({
         graphData={graphDataMemo}
         width={Math.min(dimensions.width, 430)}
         height={dimensions.height}
+        nodeLabel={() => null}
         nodeCanvasObject={nodeCanvasObject}
+        onNodeHover={(node: Record<string, unknown> | null) => setHoveredNode(node)}
         nodePointerAreaPaint={(node: Record<string, unknown>, color: string, ctx: CanvasRenderingContext2D) => {
           const x = node.x as number;
           const y = node.y as number;

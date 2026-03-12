@@ -1,14 +1,14 @@
 import { ReelStyle, MotionPreset, FilterPreset } from './types';
 
 export const MOTION_PRESETS: MotionPreset[] = [
-  { name: 'Zoom In', animation: 'kb-zoom-in', duration: 20 },
-  { name: 'Zoom Out', animation: 'kb-zoom-out', duration: 18 },
-  { name: 'Pan Left', animation: 'kb-pan-left', duration: 22 },
-  { name: 'Pan Right', animation: 'kb-pan-right', duration: 22 },
-  { name: 'Pan Up', animation: 'kb-pan-up', duration: 20 },
-  { name: 'Pan Down', animation: 'kb-pan-down', duration: 20 },
-  { name: 'Diagonal TL', animation: 'kb-diagonal-tl', duration: 25 },
-  { name: 'Diagonal BR', animation: 'kb-diagonal-br', duration: 25 },
+  { name: 'Zoom In', animation: 'kb-zoom-in', duration: 10 },
+  { name: 'Zoom Out', animation: 'kb-zoom-out', duration: 9 },
+  { name: 'Pan Left', animation: 'kb-pan-left', duration: 11 },
+  { name: 'Pan Right', animation: 'kb-pan-right', duration: 11 },
+  { name: 'Pan Up', animation: 'kb-pan-up', duration: 10 },
+  { name: 'Pan Down', animation: 'kb-pan-down', duration: 10 },
+  { name: 'Diagonal TL', animation: 'kb-diagonal-tl', duration: 12 },
+  { name: 'Diagonal BR', animation: 'kb-diagonal-br', duration: 12 },
 ];
 
 export const FILTER_PRESETS: FilterPreset[] = [

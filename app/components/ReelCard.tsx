@@ -59,7 +59,7 @@ export default function ReelCard({
         className="reel-image-container"
         style={{
           animation: isActive
-            ? `${motion.animation} ${motion.duration}s ease-in-out infinite alternate`
+            ? `${motion.animation} ${motion.duration}s linear infinite alternate`
             : 'none',
           filter: filter.css,
         }}

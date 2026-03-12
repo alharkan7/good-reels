@@ -1,5 +1,7 @@
 'use client';
 
+import { RefreshCw } from 'lucide-react';
+
 interface PullToRefreshProps {
   pullDistance: number;
   isRefreshing: boolean;
@@ -28,19 +30,7 @@ export default function PullToRefresh({
           transform: `rotate(${pullDistance * 3}deg) scale(${0.5 + progress * 0.5})`,
         }}
       >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="white"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <polyline points="23 4 23 10 17 10" />
-          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-        </svg>
+        <RefreshCw size={16} strokeWidth={2.5} color="white" />
       </div>
     </div>
   );

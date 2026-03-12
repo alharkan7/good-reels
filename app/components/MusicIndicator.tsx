@@ -1,6 +1,7 @@
 'use client';
 
 import { Track } from '@/app/lib/types';
+import { VolumeX } from 'lucide-react';
 
 interface MusicIndicatorProps {
   track: Track | null;
@@ -29,11 +30,7 @@ export default function MusicIndicator({
           className={`w-8 h-8 rounded-full bg-gradient-to-br from-white/30 to-white/10 flex items-center justify-center ${isPlaying && !isMuted ? 'disc-spinning' : ''}`}
         >
           {isMuted ? (
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-              <line x1="23" y1="9" x2="17" y2="15" />
-              <line x1="17" y1="9" x2="23" y2="15" />
-            </svg>
+            <VolumeX size={14} stroke="white" strokeWidth={2.5} />
           ) : (
             <div className="w-3 h-3 rounded-full bg-white/60" />
           )}

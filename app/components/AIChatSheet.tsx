@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { ChatMessage } from '@/app/lib/types';
 import { useLanguage } from '@/app/contexts/LanguageContext';
+import { Sparkles, X, MessageCircleQuestion, Send } from 'lucide-react';
 
 function inlineMarkdown(text: string, lineKey: string): React.ReactNode[] {
   const result: React.ReactNode[] = [];
@@ -152,23 +153,7 @@ export default function AIChatSheet({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div className="flex items-center gap-2">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ color: 'var(--ai-sparkle)' }}
-            >
-              <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-              <path d="M5 3v4" />
-              <path d="M7 5H3" />
-              <path d="M21 17v4" />
-              <path d="M23 19h-4" />
-            </svg>
+            <Sparkles size={18} strokeWidth={2} style={{ color: 'var(--ai-sparkle)' }} />
             <h3 className="text-base font-semibold text-white">
               {lang === 'id' ? 'Tanya AI' : 'Ask AI'}
             </h3>
@@ -177,19 +162,7 @@ export default function AIChatSheet({
             onClick={handleClose}
             className="text-white/60 hover:text-white p-1"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <X size={20} strokeWidth={2} />
           </button>
         </div>
 
@@ -200,21 +173,7 @@ export default function AIChatSheet({
         >
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center pb-4">
-              <svg 
-                width="36" 
-                height="36" 
-                className="mb-4 text-white/40" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="1.5" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              >
-                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-                <path d="M12 17h.01"/>
-              </svg>
+              <MessageCircleQuestion size={36} strokeWidth={1.5} className="mb-4 text-white/40" />
               <p className="text-white/50 text-sm">
                 {lang === 'id' ? 'Tanya apa saja tentang artikel ini!' : 'Ask anything about this article!'}
               </p>
@@ -264,15 +223,7 @@ export default function AIChatSheet({
             className="w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-30 transition-opacity"
             style={{ background: 'var(--ai-sparkle)' }}
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="black"
-              stroke="none"
-            >
-              <path d="M5 12l-2 7 19-7-19-7 2 7zm0 0h8" />
-            </svg>
+            <Send size={18} color="black" fill="black" />
           </button>
           {text.length > 400 && (
             <span className="absolute right-20 bottom-5 text-[10px] text-white/30">

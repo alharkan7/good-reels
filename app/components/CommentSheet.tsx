@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Comment } from '@/app/lib/types';
+import { X, Send } from 'lucide-react';
 
 interface CommentSheetProps {
   isOpen: boolean;
@@ -74,19 +75,7 @@ export default function CommentSheet({
             onClick={handleClose}
             className="text-white/60 hover:text-white p-1"
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+            <X size={20} strokeWidth={2} />
           </button>
         </div>
 
@@ -127,15 +116,7 @@ export default function CommentSheet({
             className="w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-30 transition-opacity"
             style={{ background: 'var(--toggle-active)' }}
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="white"
-              stroke="none"
-            >
-              <path d="M5 12l-2 7 19-7-19-7 2 7zm0 0h8" />
-            </svg>
+            <Send size={18} color="white" fill="white" />
           </button>
         </div>
       </div>

@@ -1,5 +1,7 @@
 'use client';
 
+import { Server, Share2, Box } from 'lucide-react';
+
 interface LayoutToggleProps {
   mode: 'reels' | 'network' | 'games';
   onToggle: (mode: 'reels' | 'network' | 'games') => void;
@@ -28,19 +30,7 @@ export default function LayoutToggle({
             mode === 'reels' ? 'var(--toggle-active)' : 'transparent',
         }}
       >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <rect x="2" y="2" width="20" height="8" rx="2" />
-          <rect x="2" y="14" width="20" height="8" rx="2" />
-        </svg>
+        <Server size={14} strokeWidth={2} />
         Wiki
       </button>
 
@@ -57,22 +47,7 @@ export default function LayoutToggle({
             mode === 'network' ? 'var(--toggle-active)' : 'transparent',
         }}
       >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="12" cy="5" r="3" />
-          <circle cx="5" cy="19" r="3" />
-          <circle cx="19" cy="19" r="3" />
-          <line x1="12" y1="8" x2="5" y2="16" />
-          <line x1="12" y1="8" x2="19" y2="16" />
-        </svg>
+        <Share2 size={14} strokeWidth={2} />
         Graph
       </button>
 
@@ -89,21 +64,7 @@ export default function LayoutToggle({
             mode === 'games' ? 'var(--toggle-active)' : 'transparent',
         }}
       >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M12 2l10 6.5v7L12 22 2 15.5v-7L12 2z" />
-          <path d="M12 22v-6.5" />
-          <path d="M22 8.5l-10 6.5-10-6.5" />
-          <path d="M2 15.5l10-6.5 10 6.5" />
-        </svg>
+        <Box size={14} strokeWidth={2} />
         Games
       </button>
     </div>

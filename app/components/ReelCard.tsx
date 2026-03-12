@@ -74,7 +74,14 @@ export default function ReelCard({
         />
       </div>
 
-      <div className="absolute inset-0 reel-overlay-gradient z-[5]" />
+      {/* Background/Overlay tap toggle for mute (Instagram style) */}
+      <div 
+        className="absolute inset-0 reel-overlay-gradient z-[5] cursor-pointer" 
+        onClick={(e) => {
+          e.stopPropagation(); // Avoid triggering feed ref click
+          onToggleMute();
+        }}
+      />
 
       {/* Action bar — FIXED position, does not move */}
       <div

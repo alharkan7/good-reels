@@ -95,11 +95,13 @@ export default function ReelsFeed({
     trackIndex: 0,
   };
 
+  const effectiveIsMuted = isMuted || layoutMode !== 'reels';
+
   const { isPlaying, tryPlay } = useBackgroundMusic(
     currentIndex,
     tracks,
     currentStyle.trackIndex,
-    isMuted
+    effectiveIsMuted
   );
 
   const {
@@ -199,8 +201,8 @@ export default function ReelsFeed({
               style={style}
               track={track}
               isActive={index === currentIndex}
-              isMusicPlaying={isPlaying && !isMuted}
-              isMuted={isMuted}
+              isMusicPlaying={isPlaying && !effectiveIsMuted}
+              isMuted={effectiveIsMuted}
               onToggleMute={toggleMute}
               isPriority={index <= currentIndex + 1}
               actionBar={

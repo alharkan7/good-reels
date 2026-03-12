@@ -114,7 +114,7 @@ export function useBackgroundMusic(
   const tryPlay = useCallback(() => {
     console.log("tryPlay invoked manually");
     interactionDone.current = true;
-    if (audioRef.current && !audioRef.current.muted) {
+    if (audioRef.current) {
       audioRef.current
         .play()
         .then(() => setIsPlaying(true))

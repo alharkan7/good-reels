@@ -203,7 +203,13 @@ export default function ReelsFeed({
               isActive={index === currentIndex}
               isMusicPlaying={isPlaying && !effectiveIsMuted}
               isMuted={effectiveIsMuted}
-              onToggleMute={toggleMute}
+              onToggleMute={() => {
+                tryPlay();
+                if (!isPlaying && !effectiveIsMuted) {
+                  return;
+                }
+                toggleMute();
+              }}
               isPriority={index <= currentIndex + 1}
               actionBar={
                 <ActionBar

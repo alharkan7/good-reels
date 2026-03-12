@@ -1,6 +1,6 @@
 'use client';
 
-import { Heart, MessageSquare, Bookmark, Send, Search } from 'lucide-react';
+import { Heart, MessageSquare, Bookmark, Send, Search, Layers } from 'lucide-react';
 
 interface ActionBarProps {
   articleId: string;
@@ -12,6 +12,7 @@ interface ActionBarProps {
   onBookmark: () => void;
   onAIChat: () => void;
   onSearch: () => void;
+  onCategory: () => void;
   onShare: () => void;
   articleTitle: string;
   articleUrl: string;
@@ -31,6 +32,7 @@ export default function ActionBar({
   onBookmark,
   onAIChat,
   onSearch,
+  onCategory,
   onShare,
 }: ActionBarProps) {
   return (
@@ -81,6 +83,20 @@ export default function ActionBar({
           style={{ background: 'var(--action-bg)' }}
         >
           <Search size={22} stroke="white" strokeWidth={2} />
+        </div>
+      </button>
+
+      {/* Category */}
+      <button
+        onClick={onCategory}
+        className="action-btn flex flex-col items-center gap-1"
+        aria-label="Category"
+      >
+        <div
+          className="w-11 h-11 rounded-full flex items-center justify-center"
+          style={{ background: 'var(--action-bg)' }}
+        >
+          <Layers size={22} stroke="white" strokeWidth={2} />
         </div>
       </button>
 

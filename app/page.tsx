@@ -21,11 +21,12 @@ export default function Home() {
   const [currentArticle, setCurrentArticle] = useState<Article | null>(null);
   const [injectedArticle, setInjectedArticle] = useState<Article | null>(null);
   const [lang, setLang] = useState<'id' | 'en'>('id');
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showInfo, setShowInfo] = useState(false);
   const toggleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
 
-  const bufferProps = useArticleBuffer(lang);
+  const bufferProps = useArticleBuffer(lang, activeCategory);
   
   const toggleLang = () => setLang((prev) => (prev === 'id' ? 'en' : 'id'));
 
@@ -183,6 +184,8 @@ export default function Home() {
           injectedArticle={injectedArticle}
           lang={lang}
           layoutMode={layoutMode}
+          activeCategory={activeCategory}
+          setActiveCategory={setActiveCategory}
           {...bufferProps}
         />
       </div>

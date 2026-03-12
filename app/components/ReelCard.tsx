@@ -164,15 +164,22 @@ export default function ReelCard({
             filter: filter.css,
           }}
         >
-        <Image
-          src={article.imageUrl}
-          alt={article.title}
-          fill
-          style={{ objectFit: isPinching && zoomLevel < 1 ? 'contain' : 'cover' }}
-          priority={isPriority}
-          sizes="100vw"
-          unoptimized
-        />
+        {article.imageUrl ? (
+          <Image
+            src={article.imageUrl}
+            alt={article.title}
+            fill
+            style={{ objectFit: isPinching && zoomLevel < 1 ? 'contain' : 'cover' }}
+            priority={isPriority}
+            sizes="100vw"
+            unoptimized
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-900 px-8 text-center border-[12px] border-zinc-950">
+            <span className="text-[160px] font-serif leading-none text-white/10 mb-6">W</span>
+            <p className="text-white/30 font-mono text-sm">No Image Available</p>
+          </div>
+        )}
       </div>
       </div>
 

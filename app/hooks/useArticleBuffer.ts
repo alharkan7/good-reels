@@ -58,10 +58,11 @@ const translateSingleArticle = async (article: Article, targetLang: 'id' | 'en')
   return article; // fallback
 };
 
-export function useArticleBuffer(lang: 'id' | 'en' = 'id') {
+export function useArticleBuffer(lang: 'id' | 'en' = 'id', category: string | null = null) {
   const [articles, setArticles] = useState<Article[]>([]);
   const isHydrated = useRef(false);
   const prevLang = useRef(lang);
+  const prevCategory = useRef(category);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -72,12 +73,14 @@ export function useArticleBuffer(lang: 'id' | 'en' = 'id') {
   // Eliminate Hydration Mismatch
   useEffect(() => {
     if (!isHydrated.current) {
-      const initial = shuffled((lang === 'en' ? preloadedRawEn : preloadedRawId) as Article[]).slice(0, INITIAL_BATCH);
-      initial.forEach(a => preloadedUsed.current.add(a.id));
-      setArticles(initial);
+      if (!category) {
+        const initial = shuffled((lang === 'en' ? preloadedRawEn : preloadedRawId) as Article[]).slice(0, INITIAL_BATCH);
+        initial.forEach(a => preloadedUsed.current.add(a.id));
+        setArticles(initial);
+      }
       isHydrated.current = true;
     }
-  }, [lang]);
+  }, [lang, category]);
 
   // Handle language changes dynamically
   useEffect(() => {
@@ -135,7 +138,7 @@ export function useArticleBuffer(lang: 'id' | 'en' = 'id') {
     setIsLoading(true);
 
     stallTimer.current = setTimeout(() => {
-      if (isFetching.current) {
+      if (isFetching.current && !category) {
         const filler = getPreloadedBatch(count, preloadedUsed.current, fetchLang);
         filler.forEach((a) => preloadedUsed.current.add(a.id));
         setArticles((prev) => [...prev, ...filler]);
@@ -143,47 +146,65 @@ export function useArticleBuffer(lang: 'id' | 'en' = 'id') {
     }, 4000);
 
     try {
-      const res = await fetch(`/api/articles?count=${count}&lang=${fetchLang}`);
+      const categoryParam = category ? `&category=${encodeURIComponent(category)}` : '';
+      const res = await fetch(`/api/articles?count=${count}&lang=${fetchLang}${categoryParam}`);
       if (!res.ok) throw new Error('Failed to fetch articles');
       const newArticles: Article[] = await res.json();
       if (newArticles.length > 0) {
         setArticles((prev) => [...prev, ...newArticles]);
-      } else {
+      } else if (!category) {
         const filler = getPreloadedBatch(count, preloadedUsed.current, fetchLang);
         filler.forEach((a) => preloadedUsed.current.add(a.id));
         setArticles((prev) => [...prev, ...filler]);
       }
     } catch (error) {
       console.error('Article fetch error:', error);
-      const filler = getPreloadedBatch(count, preloadedUsed.current, fetchLang);
-      filler.forEach((a) => preloadedUsed.current.add(a.id));
-      setArticles((prev) => [...prev, ...filler]);
+      if (!category) {
+        const filler = getPreloadedBatch(count, preloadedUsed.current, fetchLang);
+        filler.forEach((a) => preloadedUsed.current.add(a.id));
+        setArticles((prev) => [...prev, ...filler]);
+      }
     } finally {
       if (stallTimer.current) clearTimeout(stallTimer.current);
       stallTimer.current = null;
       isFetching.current = false;
       setIsLoading(false);
     }
-  }, []);
+  }, [category]);
 
   useEffect(() => {
     if (!isHydrated.current) return;
     const remaining = articles.length - currentIndex - 1;
     if (remaining <= BUFFER_THRESHOLD && !isFetching.current) {
-      fetchBatch(PREFETCH_BATCH, lang);
+      if (articles.length === 0 && !category) {
+        // Just let it load normally, but if it has no category we definitely want a fetch.
+      }
+      fetchBatch(articles.length === 0 ? INITIAL_BATCH : PREFETCH_BATCH, lang);
     }
-  }, [currentIndex, articles.length, fetchBatch, lang]);
+  }, [currentIndex, articles.length, fetchBatch, lang, category]);
 
   const refresh = useCallback(async () => {
     preloadedUsed.current.clear();
-    const sourceRaw = lang === 'en' ? preloadedRawEn : preloadedRawId;
-    const fresh = shuffled(sourceRaw as Article[]).slice(0, INITIAL_BATCH);
-    fresh.forEach((a) => preloadedUsed.current.add(a.id));
+    let fresh: Article[] = [];
+    if (!category) {
+      const sourceRaw = lang === 'en' ? preloadedRawEn : preloadedRawId;
+      fresh = shuffled(sourceRaw as Article[]).slice(0, INITIAL_BATCH);
+      fresh.forEach((a) => preloadedUsed.current.add(a.id));
+    }
     setArticles(fresh);
     setCurrentIndex(0);
     isFetching.current = false;
     fetchBatch(INITIAL_BATCH, lang);
-  }, [fetchBatch, lang]);
+  }, [fetchBatch, lang, category]);
+
+  // Handle category changes
+  useEffect(() => {
+    if (!isHydrated.current) return;
+    if (prevCategory.current !== category) {
+      prevCategory.current = category;
+      refresh();
+    }
+  }, [category, refresh]);
 
   const prependArticle = useCallback((article: Article) => {
     setArticles((prev) => [article, ...prev]);

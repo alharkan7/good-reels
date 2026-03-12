@@ -14,7 +14,6 @@ import AIChatSheet from './AIChatSheet';
 import PullToRefresh from './PullToRefresh';
 import LoadingReel from './LoadingReel';
 import SearchModal from './SearchModal';
-import CategoryModal from './CategoryModal';
 
 const BUFFER_THRESHOLD = 3;
 
@@ -60,7 +59,6 @@ export default function ReelsFeed({
   const [tracks, setTracks] = useState<Track[]>(FALLBACK_TRACKS);
   const [chatSheetOpen, setChatSheetOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
-  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
 
   const feedRef = useRef<HTMLDivElement>(null);
 
@@ -264,7 +262,6 @@ export default function ReelsFeed({
                   onBookmark={() => toggleBookmark(article.id)}
                   onAIChat={() => setChatSheetOpen(true)}
                   onSearch={() => setSearchModalOpen(true)}
-                  onCategory={() => setCategoryModalOpen(true)}
                   onShare={handleShare}
                   articleTitle={article.title}
                   articleUrl={article.articleUrl}
@@ -294,11 +291,6 @@ export default function ReelsFeed({
         isOpen={searchModalOpen}
         onClose={() => setSearchModalOpen(false)}
         onSearch={handleSearch}
-      />
-
-      <CategoryModal
-        isOpen={categoryModalOpen}
-        onClose={() => setCategoryModalOpen(false)}
         activeCategory={activeCategory}
         onSelectCategory={setActiveCategory}
       />

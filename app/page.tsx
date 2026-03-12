@@ -23,6 +23,7 @@ export default function Home() {
   const [lang, setLang] = useState<'id' | 'en'>('id');
   const [showInfo, setShowInfo] = useState(false);
   const toggleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
 
   const bufferProps = useArticleBuffer(lang);
   
@@ -73,9 +74,55 @@ export default function Home() {
     setCurrentArticle(article);
   }, []);
 
+  const onTouchStart = (e: React.TouchEvent) => {
+    const target = e.target as HTMLElement;
+    // Do not trigger page swipe if touching a game card, cytoscape graph, or interactive element
+    if (target.closest('[data-swipe-ignore="true"], canvas, button, a, input, [role="button"], [role="slider"]')) {
+      return;
+    }
+    setTouchStart({ x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY });
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStart) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+
+    const dx = touchStart.x - touchEndX;
+    const dy = touchStart.y - touchEndY;
+
+    // Must be a predominantly horizontal swipe of at least 50px
+    if (Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 50) {
+      const modes: ('reels' | 'network' | 'games')[] = ['reels', 'network', 'games'];
+      const currentIndex = modes.indexOf(layoutMode);
+      
+      let nextIndex = dx > 0 ? currentIndex + 1 : currentIndex - 1; // dx > 0 means swiped left
+      
+      if (nextIndex >= 0 && nextIndex < modes.length) {
+        let nextMode = modes[nextIndex];
+        // Skip network mode if it's unavailable
+        if (nextMode === 'network' && !currentArticle) {
+          nextIndex = dx > 0 ? nextIndex + 1 : nextIndex - 1;
+          if (nextIndex >= 0 && nextIndex < modes.length) {
+            nextMode = modes[nextIndex];
+          } else {
+            setTouchStart(null);
+            return;
+          }
+        }
+        handleLayoutToggle(nextMode);
+      }
+    }
+    setTouchStart(null);
+  };
+
   return (
     <LanguageProvider lang={lang} setLang={setLang} toggleLang={toggleLang}>
-      <main className="relative w-full h-dvh bg-black overflow-hidden relative">
+      <main 
+        className="relative w-full h-dvh bg-black overflow-hidden relative"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         {/* Top Bar with Icons constrained to desktop max-width */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-[430px] px-4 z-50 flex justify-between items-center h-[36px] pointer-events-none">
         <div 

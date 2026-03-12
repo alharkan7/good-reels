@@ -21,7 +21,7 @@ export default function GameCard({ article, lang, isGamesMode }: GameCardProps) 
   const [gameData, setGameData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  
+
   // Game state
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
@@ -34,14 +34,14 @@ export default function GameCard({ article, lang, isGamesMode }: GameCardProps) 
     if (!isGamesMode) return;
     if (fetchedObj.current) return;
     fetchedObj.current = true;
-    
+
     fetch('/api/games', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        title: article.title, 
+      body: JSON.stringify({
+        title: article.title,
         extract: article.extract,
-        lang 
+        lang
       }),
     })
       .then(res => res.json())
@@ -57,7 +57,7 @@ export default function GameCard({ article, lang, isGamesMode }: GameCardProps) 
 
   return (
     <div className="w-full h-full relative flex items-center justify-center">
-      
+
       {loading ? (
         <div className="flex flex-col items-center justify-center space-y-4 animate-pulse">
           <div className="w-20 h-20 rounded-full border-4 border-t-[var(--node-linked)] border-r-[var(--node-center)] border-b-[var(--node-hover)] border-l-[var(--toggle-active)] animate-spin flex items-center justify-center">
@@ -68,15 +68,15 @@ export default function GameCard({ article, lang, isGamesMode }: GameCardProps) 
           </p>
         </div>
       ) : error || !gameData ? (
-        <div className="text-white/50 bg-[var(--sheet-bg)] p-4 rounded-xl backdrop-blur-sm">
+        <div data-swipe-ignore="true" className="text-white/50 bg-[var(--sheet-bg)] p-4 rounded-xl backdrop-blur-sm">
           {lang === 'id' ? 'Gagal memuat game.' : 'Failed to load game.'}
         </div>
       ) : (
-        <div className="w-full max-w-sm flex flex-col items-center bg-[var(--sheet-bg)] border border-[var(--edge-default)] p-6 rounded-3xl shadow-2xl mx-4">
-          <div className="absolute -top-4 bg-[var(--toggle-active)] px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest text-[#1C1C1E] shadow-lg">
+        <div data-swipe-ignore="true" className="w-full max-w-sm flex flex-col items-center bg-[var(--sheet-bg)] border border-[var(--edge-default)] p-6 rounded-3xl shadow-2xl mx-4">
+          {/* <div className="absolute -top-4 bg-[var(--toggle-active)] px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest text-[#1C1C1E] shadow-lg">
             {gameData.gameType?.replace('_', ' ')}
-          </div>
-          
+          </div> */}
+
           <h2 className="text-sm font-medium text-white/50 mb-6 text-center uppercase tracking-widest truncate w-full">
             {article.title}
           </h2>
@@ -92,9 +92,9 @@ export default function GameCard({ article, lang, isGamesMode }: GameCardProps) 
 
 function renderGame(
   lang: 'en' | 'id',
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any, 
-  selectedAnswer: string | null, 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: any,
+  selectedAnswer: string | null,
   setSelectedAnswer: (s: string) => void,
   showExplanation: boolean,
   setShowExplanation: (b: boolean) => void,
@@ -121,7 +121,7 @@ function renderGame(
             const isSelected = selectedAnswer === choice;
             const isCorrect = choice === q.correctAnswer;
             const showStatus = selectedAnswer !== null;
-            
+
             let bgClass = "bg-[var(--action-bg)] hover:bg-[var(--accent-chip-hover)] border-[var(--edge-default)]";
             if (showStatus) {
               if (isCorrect) bgClass = "bg-[var(--node-linked)]/20 border-[var(--node-linked)] text-[var(--node-linked)]";
@@ -180,22 +180,22 @@ function renderGame(
   if (type === 'word_scramble' && data.wordScramble) {
     const ws = data.wordScramble;
     const isCorrect = scrambleInput.toLowerCase().trim() === (ws.originalWord || '').toLowerCase();
-    
+
     return (
       <div className="w-full flex flex-col space-y-6 items-center">
         <div className="text-4xl font-mono font-black tracking-[0.2em] text-center text-transparent bg-clip-text bg-gradient-to-r from-[var(--node-linked)] to-[var(--node-center)] uppercase">
           {ws.scrambledWord}
         </div>
         <p className="text-white/60 text-sm text-center italic mt-2">{lang === 'id' ? 'Petunjuk' : 'Hint'}: {ws.hint}</p>
-        
-        <input 
+
+        <input
           type="text"
           value={scrambleInput}
           onChange={(e) => setScrambleInput(e.target.value)}
           placeholder={lang === 'id' ? "Susun kata..." : "Unscramble it..."}
           className="w-full bg-[#000000] border-2 border-[var(--edge-default)] rounded-xl p-4 text-center text-white text-lg font-bold outline-none focus:border-[var(--node-linked)] transition-colors"
         />
-        
+
         {scrambleInput.length > 0 && isCorrect && (
           <div className="text-[var(--node-linked)] flex items-center justify-center gap-2 font-bold text-center animate-bounce text-xl">
             <Sparkles size={20} strokeWidth={2} />
@@ -210,21 +210,21 @@ function renderGame(
   if (type === 'fill_in_the_blank' && data.fillInTheBlank) {
     const fb = data.fillInTheBlank;
     const isCorrect = blankInput.toLowerCase().trim() === (fb.missingWord || '').toLowerCase();
-    
+
     return (
       <div className="w-full flex flex-col space-y-6">
         <p className="text-white text-lg font-medium text-center leading-relaxed">
-           {fb.sentenceWithBlank?.replace('___', '__________')}
+          {fb.sentenceWithBlank?.replace('___', '__________')}
         </p>
-        
-        <input 
+
+        <input
           type="text"
           value={blankInput}
           onChange={(e) => setBlankInput(e.target.value)}
           placeholder={lang === 'id' ? "Kata yang hilang..." : "Missing word..."}
           className="w-full bg-[#000000] border-2 border-[var(--edge-default)] rounded-xl p-4 text-center text-white text-lg font-bold outline-none focus:border-[var(--node-hover)] transition-colors"
         />
-        
+
         {blankInput.length > 0 && isCorrect && (
           <div className="text-[var(--node-hover)] flex items-center justify-center gap-2 font-bold text-center animate-bounce text-xl">
             <Sparkles size={20} strokeWidth={2} />

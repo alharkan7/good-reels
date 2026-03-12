@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Gamepad2 } from 'lucide-react';
+import { Gamepad2, ChevronDown } from 'lucide-react';
 import { Article } from '@/app/lib/types';
 import GameCard from './GameCard';
 import PullToRefresh from './PullToRefresh';
@@ -116,7 +116,7 @@ export default function GamesFeed({
       />
 
       {articles.map((article, index) => (
-        <div key={`game-${article.id}-${index}`} data-index={index} className="reel-card">
+        <div key={`game-${article.id}-${index}`} data-index={index} className="reel-card relative">
           {Math.abs(index - currentIndex) <= 2 && ( // Only render games near current index to save API calls
             <GameCard
               article={article}
@@ -124,6 +124,15 @@ export default function GamesFeed({
               lang={lang}
               isGamesMode={layoutMode === 'games'}
             />
+          )}
+          
+          {index === currentIndex && (
+            <div 
+              className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none opacity-50 animate-bounce"
+              style={{ animationDuration: '2s' }}
+            >
+              <ChevronDown size={36} className="text-white drop-shadow-md" />
+            </div>
           )}
         </div>
       ))}

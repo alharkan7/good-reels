@@ -190,7 +190,7 @@ export default function ReelCard({
       <div
         className="absolute right-3 z-20 flex flex-col items-center gap-5"
         style={{ 
-          bottom: 'calc(25dvh + 16px)',
+          bottom: 'calc(12dvh + 16px)',
           opacity: isPinching ? 0 : 1,
           transition: 'opacity 0.2s ease-out',
           pointerEvents: isPinching ? 'none' : 'auto'

@@ -13,6 +13,7 @@ import ActionBar from './ActionBar';
 import AIChatSheet from './AIChatSheet';
 import PullToRefresh from './PullToRefresh';
 import LoadingReel from './LoadingReel';
+import SearchModal from './SearchModal';
 
 const BUFFER_THRESHOLD = 3;
 
@@ -53,8 +54,43 @@ export default function ReelsFeed({
 
   const [tracks, setTracks] = useState<Track[]>(FALLBACK_TRACKS);
   const [chatSheetOpen, setChatSheetOpen] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
 
   const feedRef = useRef<HTMLDivElement>(null);
+
+  const handleSearch = async (query: string, searchLang: 'id' | 'en') => {
+    const searchRes = await fetch(
+      `https://${searchLang}.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=1&format=json&origin=*`
+    );
+    if (!searchRes.ok) throw new Error('Search failed');
+    const searchData = await searchRes.json();
+    
+    if (!searchData[1] || searchData[1].length === 0) {
+      throw new Error(searchLang === 'id' ? 'Tidak ada hasil. Coba kata kunci lain.' : 'No results found. Please try another term.');
+    }
+    const matchTitle = searchData[1][0];
+
+    const summaryRes = await fetch(
+      `https://${searchLang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(matchTitle)}`,
+      { headers: { 'Api-User-Agent': 'GoodReels/1.0 (good-reels prototype)' } }
+    );
+    if (!summaryRes.ok) throw new Error('Failed to fetch summary');
+    const data = await summaryRes.json();
+
+    const article: Article = {
+      id: data.pageid?.toString() || Date.now().toString(),
+      title: data.title,
+      summary: data.extract || '',
+      imageUrl: data.thumbnail?.source || data.originalimage?.source || '',
+      imageWidth: data.thumbnail?.width || 800,
+      imageHeight: data.thumbnail?.height || 600,
+      articleUrl: data.content_urls?.mobile?.page || '',
+      extract: data.extract || '',
+    };
+
+    prependArticle(article);
+    setCurrentIndex(0);
+  };
 
   const {
     isLiked,
@@ -221,6 +257,7 @@ export default function ReelsFeed({
                   onLike={() => toggleLike(article.id)}
                   onBookmark={() => toggleBookmark(article.id)}
                   onAIChat={() => setChatSheetOpen(true)}
+                  onSearch={() => setSearchModalOpen(true)}
                   onShare={handleShare}
                   articleTitle={article.title}
                   articleUrl={article.articleUrl}
@@ -245,6 +282,12 @@ export default function ReelsFeed({
           onSendMessage={sendChatMessage}
         />
       )}
+
+      <SearchModal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        onSearch={handleSearch}
+      />
     </div>
   );
 }

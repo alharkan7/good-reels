@@ -19,11 +19,10 @@ export default function LayoutToggle({
       <button
         onClick={() => onToggle('reels')}
         disabled={disabled}
-        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
-          mode === 'reels'
+        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${mode === 'reels'
             ? 'text-black'
             : 'text-white/60 hover:text-white'
-        }`}
+          }`}
         style={{
           background:
             mode === 'reels' ? 'var(--toggle-active)' : 'transparent',
@@ -42,18 +41,17 @@ export default function LayoutToggle({
           <rect x="2" y="2" width="20" height="8" rx="2" />
           <rect x="2" y="14" width="20" height="8" rx="2" />
         </svg>
-        Reels
+        Wiki
       </button>
 
       {/* Network mode */}
       <button
         onClick={() => onToggle('network')}
         disabled={disabled}
-        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
-          mode === 'network'
+        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${mode === 'network'
             ? 'text-black'
             : 'text-white/60 hover:text-white'
-        }`}
+          }`}
         style={{
           background:
             mode === 'network' ? 'var(--toggle-active)' : 'transparent',
@@ -82,11 +80,10 @@ export default function LayoutToggle({
       <button
         onClick={() => onToggle('games')}
         disabled={disabled}
-        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
-          mode === 'games'
+        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${mode === 'games'
             ? 'text-black'
             : 'text-white/60 hover:text-white'
-        }`}
+          }`}
         style={{
           background:
             mode === 'games' ? 'var(--toggle-active)' : 'transparent',

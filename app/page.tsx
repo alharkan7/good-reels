@@ -76,7 +76,7 @@ export default function Home() {
     <LanguageProvider lang={lang} setLang={setLang} toggleLang={toggleLang}>
       <main className="relative w-full h-dvh bg-black overflow-hidden relative">
         {/* Top Bar with Icons constrained to desktop max-width */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-[430px] px-4 z-50 flex justify-between items-center pointer-events-none">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-md md:max-w-[430px] px-4 z-50 flex justify-between items-center h-[36px] pointer-events-none">
         <div 
           className="pointer-events-auto cursor-pointer p-1 text-white/60 hover:text-white transition-colors drop-shadow-md"
           onClick={() => setShowInfo(true)}

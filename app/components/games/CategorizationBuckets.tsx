@@ -67,7 +67,10 @@ export default function CategorizationBuckets({ data, lang }: { data: any, lang:
           className={`flex-1 min-h-[140px] flex flex-col items-center justify-center p-4 rounded-3xl border-2 transition-all group
             ${isDone ? 'border-green-500/50 bg-green-500/10' : 'border-[var(--node-linked)]/50 bg-[var(--node-linked)]/10 active:scale-95'}`}
         >
-          <span className="text-2xl mb-2 opacity-50 group-hover:opacity-100 transition-opacity">📦</span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2 opacity-50 group-hover:opacity-100 transition-opacity">
+            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+            <path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
+          </svg>
           <span className="text-sm font-bold text-center text-white break-words">{data.category1}</span>
           <span className="text-xs text-white/50 mt-1">{bucket1Items.length} {lang === 'id' ? 'item' : 'items'}</span>
         </button>
@@ -77,7 +80,10 @@ export default function CategorizationBuckets({ data, lang }: { data: any, lang:
           className={`flex-1 min-h-[140px] flex flex-col items-center justify-center p-4 rounded-3xl border-2 transition-all group
             ${isDone ? 'border-green-500/50 bg-green-500/10' : 'border-[var(--node-center)]/50 bg-[var(--node-center)]/10 active:scale-95'}`}
         >
-          <span className="text-2xl mb-2 opacity-50 group-hover:opacity-100 transition-opacity">📥</span>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mb-2 opacity-50 group-hover:opacity-100 transition-opacity">
+            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/>
+            <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+          </svg>
           <span className="text-sm font-bold text-center text-white break-words">{data.category2}</span>
           <span className="text-xs text-white/50 mt-1">{bucket2Items.length} {lang === 'id' ? 'item' : 'items'}</span>
         </button>

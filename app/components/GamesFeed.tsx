@@ -131,7 +131,9 @@ export default function GamesFeed({
         <div className="reel-card flex items-center justify-center">
           <div className="flex flex-col items-center justify-center space-y-4 animate-pulse">
             <div className="w-20 h-20 rounded-full border-4 border-t-[var(--node-linked)] border-r-[var(--node-center)] border-b-[var(--node-hover)] border-l-[var(--toggle-active)] animate-spin flex items-center justify-center">
-               <span className="text-3xl">🧩</span>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/80">
+                <path d="M19.439 7.85c-.049.322-.059.648-.025.973C19.535 12.58 21 14 21 14h-5.002a2 2 0 0 1-2-2v-1.5c0-1.11-.89-2-2-2s-2 .89-2 2v1.5a2 2 0 0 1-2 2H3s1.465-1.42 1.586-5.177c.034-.325.024-.651-.025-.973C4.246 5.346 2.5 4 2.5 4h5a2 2 0 0 1 2 2v1.5c0 1.11.89 2 2 2s2-.89 2-2V6a2 2 0 0 1 2-2h5s-1.746 1.346-2.061 3.85Z"/>
+              </svg>
             </div>
             <p className="text-white/60 font-mono text-sm tracking-wider">
               {lang === 'id' ? 'Memuat Game...' : 'Loading Games...'}

@@ -243,6 +243,7 @@ export default function ReelsFeed({
               isActive={index === currentIndex}
               isMusicPlaying={isPlaying && !effectiveIsMuted}
               isMuted={effectiveIsMuted}
+              onSearch={() => setSearchModalOpen(true)}
               onToggleMute={() => {
                 tryPlay();
                 if (!isPlaying && !effectiveIsMuted) {
@@ -261,7 +262,6 @@ export default function ReelsFeed({
                   onLike={() => toggleLike(article.id)}
                   onBookmark={() => toggleBookmark(article.id)}
                   onAIChat={() => setChatSheetOpen(true)}
-                  onSearch={() => setSearchModalOpen(true)}
                   onShare={handleShare}
                   articleTitle={article.title}
                   articleUrl={article.articleUrl}

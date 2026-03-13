@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { ChatMessage } from '@/app/lib/types';
 import { useLanguage } from '@/app/contexts/LanguageContext';
-import { Sparkles, X, MessageCircleQuestion, Send } from 'lucide-react';
+import { Sparkles, X, Send } from 'lucide-react';
 
 function inlineMarkdown(text: string, lineKey: string): React.ReactNode[] {
   const result: React.ReactNode[] = [];
@@ -171,39 +171,38 @@ export default function AIChatSheet({
           ref={listRef}
           className="flex-1 overflow-y-auto px-4 py-3 space-y-3 no-scrollbar"
         >
-          {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center pb-4">
-              <MessageCircleQuestion size={36} strokeWidth={1.5} className="mb-4 text-white/40" />
-              <p className="text-white/50 text-sm">
-                {lang === 'id' ? 'Tanya apa saja tentang artikel ini!' : 'Ask anything about this article!'}
-              </p>
+          <div className="msg-appear flex justify-start">
+            <div
+              className="max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed rounded-bl-md text-white/90 border border-white/20"
+              style={{ background: 'var(--ai-bubble)' }}
+            >
+              <MarkdownText text={lang === 'id' ? 'Halo! Silahkan, kamu bisa tanya apa saja tentang artikel ini 😁' : 'Hello! You can ask anything about this article 😁'} />
             </div>
-          ) : (
-            messages.map((msg) => (
+          </div>
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`msg-appear flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
               <div
-                key={msg.id}
-                className={`msg-appear flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.role === 'user'
+                  ? 'rounded-br-md text-white'
+                  : 'rounded-bl-md text-white/90 border border-white/20'
+                  }`}
+                style={{
+                  background:
+                    msg.role === 'user'
+                      ? 'var(--user-bubble)'
+                      : 'var(--ai-bubble)',
+                }}
               >
-                <div
-                  className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.role === 'user'
-                      ? 'rounded-br-md text-white'
-                      : 'rounded-bl-md text-white/90'
-                    }`}
-                  style={{
-                    background:
-                      msg.role === 'user'
-                        ? 'var(--user-bubble)'
-                        : 'var(--ai-bubble)',
-                  }}
-                >
-                  <MarkdownText text={msg.text} />
-                  {msg.isStreaming && (
-                    <span className="streaming-cursor" />
-                  )}
-                </div>
+                <MarkdownText text={msg.text} />
+                {msg.isStreaming && (
+                  <span className="streaming-cursor" />
+                )}
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
 
         {/* Input */}

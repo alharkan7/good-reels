@@ -41,7 +41,7 @@ export default function SearchModal({
   onSelectCategory,
   activeCategory
 }: SearchModalProps) {
-  const [mode, setMode] = useState<'search' | 'category'>('search');
+  const [mode, setMode] = useState<'category' | 'search'>('category');
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState('');

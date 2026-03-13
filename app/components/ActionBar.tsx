@@ -11,7 +11,6 @@ interface ActionBarProps {
   onLike: () => void;
   onBookmark: () => void;
   onAIChat: () => void;
-  onSearch: () => void;
   onShare: () => void;
   articleTitle: string;
   articleUrl: string;
@@ -30,7 +29,6 @@ export default function ActionBar({
   onLike,
   onBookmark,
   onAIChat,
-  onSearch,
   onShare,
 }: ActionBarProps) {
   return (
@@ -68,20 +66,6 @@ export default function ActionBar({
         <span className="text-xs font-semibold text-white/80">
           {commentCount > 0 ? commentCount : ''}
         </span>
-      </button>
-
-      {/* Search */}
-      <button
-        onClick={onSearch}
-        className="action-btn flex flex-col items-center gap-1"
-        aria-label="Search"
-      >
-        <div
-          className="w-11 h-11 rounded-full flex items-center justify-center"
-          style={{ background: 'var(--action-bg)' }}
-        >
-          <Search size={22} stroke="white" strokeWidth={2} />
-        </div>
       </button>
 
       {/* Bookmark */}

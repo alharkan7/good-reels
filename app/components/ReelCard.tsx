@@ -6,7 +6,7 @@ import { Article, Track, ReelStyle } from '@/app/lib/types';
 import { MOTION_PRESETS, FILTER_PRESETS } from '@/app/lib/variety';
 import MusicIndicator from './MusicIndicator';
 import { useLanguage } from '@/app/contexts/LanguageContext';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Search } from 'lucide-react';
 
 interface ReelCardProps {
   article: Article;
@@ -18,6 +18,7 @@ interface ReelCardProps {
   onToggleMute: () => void;
   isPriority: boolean;
   actionBar: React.ReactNode;
+  onSearch?: () => void;
 }
 
 export default function ReelCard({
@@ -30,6 +31,7 @@ export default function ReelCard({
   onToggleMute,
   isPriority,
   actionBar,
+  onSearch,
 }: ReelCardProps) {
   const motion = MOTION_PRESETS[style.motionPreset];
   const filter = FILTER_PRESETS[style.filterPreset];
@@ -205,6 +207,26 @@ export default function ReelCard({
       >
         {actionBar}
       </div>
+
+      {/* Top right search button */}
+      {onSearch && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onSearch();
+          }}
+          className="absolute top-16 right-3 z-30 action-btn flex flex-col items-center gap-1"
+          aria-label="Search"
+          style={{ opacity: isPinching ? 0 : 1, transition: 'opacity 0.2s ease-out' }}
+        >
+          <div
+            className="w-11 h-11 rounded-full flex items-center justify-center drop-shadow-md"
+            style={{ background: 'var(--action-bg)' }}
+          >
+            <Search size={22} stroke="white" strokeWidth={2} />
+          </div>
+        </button>
+      )}
 
       {/* Bottom content area — grows upward from bottom, capped at max */}
       <div

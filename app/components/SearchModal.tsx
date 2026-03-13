@@ -98,7 +98,7 @@ export default function SearchModal({
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${mode === 'category' ? 'bg-white text-black' : 'text-white/60 hover:text-white'
                 }`}
             >
-              {lang === 'id' ? 'Kategori' : 'Category'}
+              {lang === 'id' ? 'Algoritma' : 'Algorithm'}
             </button>
           </div>
         </div>
@@ -142,7 +142,7 @@ export default function SearchModal({
             <form onSubmit={handleCategorySubmit} className="flex flex-col gap-3">
               <input
                 type="text"
-                placeholder={lang === 'id' ? 'Atau cari kategori kustom...' : 'Or search custom category...'}
+                placeholder={lang === 'id' ? 'Atau buat algoritma sendiri...' : 'Or create a custom algorithm...'}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 className="w-full bg-[#111] border border-white/10 rounded-full py-3 px-5 text-white placeholder-white/40 focus:outline-none focus:border-white/30 transition-colors shadow-inner"

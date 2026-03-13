@@ -20,6 +20,7 @@ Swipe through full-screen article cards with cinematic Ken Burns image effects, 
 - **Pull-to-refresh** — elastic pull gesture at the top of the feed
 - **AI Mini-Games** — transform any article into 1 of 5 playable, mobile-first touch games instantly synthesized by Gemini (Swipe Cards, Match Pairs, Timeline Sorter, Buckets, or Scratch-Off)
 - **State preservation** — scroll position and article buffer persist when switching between Reels, Graph, and Games views
+- **Progressive Web App (PWA)** — installable on Android and iOS devices with offline fallback
 
 ## Tech Stack
 

@@ -32,6 +32,8 @@ export interface Article {
   imageHeight: number;
   articleUrl: string;
   extract: string;
+  lang?: 'id' | 'en';
+  translationFailedTargetLang?: 'id' | 'en';
 }
 
 export interface Track {

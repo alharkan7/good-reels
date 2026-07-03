@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { LanguageProvider } from '@/app/contexts/LanguageContext';
 import { Article } from '@/app/lib/types';
 import ReelsFeed from '@/app/components/ReelsFeed';
@@ -23,10 +23,21 @@ export default function Home() {
   const [lang, setLang] = useState<'id' | 'en'>('en');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showInfo, setShowInfo] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toggleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [touchStart, setTouchStart] = useState<{ x: number; y: number } | null>(null);
 
   const bufferProps = useArticleBuffer(lang, activeCategory);
+
+  useEffect(() => {
+    if (currentArticle && currentArticle.translationFailedTargetLang === lang) {
+      setToastMessage(lang === 'id' ? 'Artikel ini tidak tersedia dalam Bahasa Indonesia.' : 'This article is not available in English.');
+      const timer = setTimeout(() => setToastMessage(null), 3000);
+      return () => clearTimeout(timer);
+    } else {
+      setToastMessage(null);
+    }
+  }, [currentArticle, lang]);
   
   const toggleLang = () => setLang((prev) => (prev === 'id' ? 'en' : 'id'));
 
@@ -61,6 +72,7 @@ export default function Home() {
           imageHeight: data.thumbnail?.height || 600,
           articleUrl: data.content_urls?.mobile?.page || '',
           extract: data.extract || '',
+          lang,
         };
         setInjectedArticle(article);
         setCurrentArticle(article);
@@ -147,6 +159,13 @@ export default function Home() {
         onToggle={handleLayoutToggle}
         disabled={!currentArticle && layoutMode === 'reels'}
       />
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="absolute top-[80px] left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-black/80 backdrop-blur-md rounded-full text-white/90 text-xs font-medium text-center shadow-lg border border-white/10 animate-fade-in pointer-events-none w-max max-w-[90%]">
+          {toastMessage}
+        </div>
+      )}
 
       {/* Info Modal */}
       {showInfo && (

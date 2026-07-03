@@ -1,0 +1,41 @@
+
+> good-reels@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+
+✓ Starting...
+✓ Ready in 1187ms
+ GET / 200 in 757ms (compile: 398ms, render: 358ms)
+ GET /api/tracks?count=20 200 in 300ms
+ GET /api/articles?count=5&lang=en 200 in 1811ms (compile: 113ms, render: 1698ms)
+ GET / 200 in 112ms (compile: 6ms, render: 106ms)
+ GET /api/tracks?count=20 200 in 12ms
+ GET /api/articles?count=5&lang=en 200 in 1926ms (compile: 3ms, render: 1923ms)
+ GET / 200 in 104ms (compile: 4ms, render: 100ms)
+ GET /api/tracks?count=20 200 in 13ms
+ GET /api/articles?count=5&lang=en 200 in 1726ms (compile: 4ms, render: 1722ms)
+ GET / 200 in 89ms (compile: 4ms, render: 85ms)
+ GET /api/tracks?count=20 200 in 29ms
+ GET /api/articles?count=5&lang=en 200 in 1884ms (compile: 27ms, render: 1857ms)
+ GET / 200 in 87ms (compile: 4ms, render: 82ms)
+ GET /api/tracks?count=20 200 in 8ms
+ GET /api/articles?count=5&lang=en 200 in 2.2s (compile: 3ms, render: 2.2s)
+ GET /api/links?title=Equestrian%20statue%20of%20Edward%20Horner&lang=en 200 in 2.1s
+ GET /api/links?title=Equestrian%20statue%20of%20Edward%20Horner&lang=en 200 in 38ms
+ GET / 200 in 82ms (compile: 4ms, render: 78ms)
+ GET /api/tracks?count=20 200 in 15ms
+ GET /api/articles?count=5&lang=en 200 in 1895ms (compile: 6ms, render: 1890ms)
+ GET / 200 in 112ms (compile: 3ms, render: 108ms)
+ GET /api/tracks?count=20 200 in 41ms
+ GET /api/articles?count=5&lang=en 200 in 307ms (compile: 5ms, render: 301ms)
+ GET /api/links?title=Tjeker&lang=en 200 in 41ms
+ GET /api/links?title=Tjeker&lang=en 200 in 40ms
+ GET / 200 in 125ms (compile: 7ms, render: 118ms)
+ GET /api/tracks?count=20 200 in 11ms
+ GET /api/articles?count=5&lang=en 200 in 1795ms (compile: 5ms, render: 1790ms)
+ GET / 200 in 131ms (compile: 7ms, render: 124ms)
+ GET /api/tracks?count=20 200 in 10ms
+ GET /api/articles?count=5&lang=en 200 in 1917ms (compile: 15ms, render: 1902ms)

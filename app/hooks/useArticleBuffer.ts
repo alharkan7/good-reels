@@ -20,7 +20,7 @@ function shuffled<T>(arr: T[]): T[] {
 
 function getPreloadedBatch(count: number, exclude: Set<string>, lang: 'id' | 'en'): Article[] {
   const sourceRaw = lang === 'en' ? preloadedRawEn : preloadedRawId;
-  const PRELOADED = sourceRaw as Article[];
+  const PRELOADED = (sourceRaw as Article[]).map(a => ({ ...a, lang }));
   
   const pool = PRELOADED.filter((a) => !exclude.has(a.id));
   const source = pool.length >= count ? pool : PRELOADED;
@@ -28,6 +28,9 @@ function getPreloadedBatch(count: number, exclude: Set<string>, lang: 'id' | 'en
 }
 
 const translateSingleArticle = async (article: Article, targetLang: 'id' | 'en'): Promise<Article> => {
+  if (article.lang === targetLang) {
+    return article;
+  }
   const sourceLang = targetLang === 'en' ? 'id' : 'en';
   try {
     const url = `https://${sourceLang}.wikipedia.org/w/api.php?action=query&prop=langlinks&lllang=${targetLang}&titles=${encodeURIComponent(article.title)}&format=json&origin=*`;
@@ -49,13 +52,15 @@ const translateSingleArticle = async (article: Article, targetLang: 'id' | 'en')
             imageWidth: sm.thumbnail?.width || 800,
             imageHeight: sm.thumbnail?.height || 600,
             articleUrl: sm.content_urls?.mobile?.page || '',
-            extract: sm.extract || ''
+            extract: sm.extract || '',
+            lang: targetLang,
+            translationFailedTargetLang: undefined
           };
         }
       }
     }
   } catch { /* ignore */ }
-  return article; // fallback
+  return { ...article, translationFailedTargetLang: targetLang }; // fallback
 };
 
 export function useArticleBuffer(lang: 'id' | 'en' = 'en', category: string | null = null) {
@@ -74,7 +79,9 @@ export function useArticleBuffer(lang: 'id' | 'en' = 'en', category: string | nu
   useEffect(() => {
     if (!isHydrated.current) {
       if (!category) {
-        const initial = shuffled((lang === 'en' ? preloadedRawEn : preloadedRawId) as Article[]).slice(0, INITIAL_BATCH);
+        const initial = shuffled((lang === 'en' ? preloadedRawEn : preloadedRawId) as Article[])
+          .slice(0, INITIAL_BATCH)
+          .map(a => ({ ...a, lang }));
         initial.forEach(a => preloadedUsed.current.add(a.id));
         setArticles(initial);
       }
@@ -97,7 +104,7 @@ export function useArticleBuffer(lang: 'id' | 'en' = 'en', category: string | nu
       return current.map(a => {
         const preloadedIdx = (fromRaw as Article[]).findIndex(x => x.id === a.id);
         if (preloadedIdx !== -1 && toRaw[preloadedIdx]) {
-           return toRaw[preloadedIdx] as Article;
+           return { ...(toRaw[preloadedIdx] as Article), lang: targetLang, translationFailedTargetLang: undefined };
         }
         return a;
       });
@@ -188,7 +195,9 @@ export function useArticleBuffer(lang: 'id' | 'en' = 'en', category: string | nu
     let fresh: Article[] = [];
     if (!category) {
       const sourceRaw = lang === 'en' ? preloadedRawEn : preloadedRawId;
-      fresh = shuffled(sourceRaw as Article[]).slice(0, INITIAL_BATCH);
+      fresh = shuffled(sourceRaw as Article[])
+        .slice(0, INITIAL_BATCH)
+        .map(a => ({ ...a, lang }));
       fresh.forEach((a) => preloadedUsed.current.add(a.id));
     }
     setArticles(fresh);

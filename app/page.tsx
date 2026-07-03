@@ -20,7 +20,7 @@ export default function Home() {
   const [layoutMode, setLayoutMode] = useState<'reels' | 'network' | 'games'>('reels');
   const [currentArticle, setCurrentArticle] = useState<Article | null>(null);
   const [injectedArticle, setInjectedArticle] = useState<Article | null>(null);
-  const [lang, setLang] = useState<'id' | 'en'>('id');
+  const [lang, setLang] = useState<'id' | 'en'>('en');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [showInfo, setShowInfo] = useState(false);
   const toggleTimeoutRef = useRef<NodeJS.Timeout | null>(null);

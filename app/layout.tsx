@@ -54,15 +54,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headersList = await headers();
-  const country = headersList.get("x-vercel-ip-country");
-  const acceptLanguage = headersList.get("accept-language");
-  const isIndonesian =
-    country === "ID" || acceptLanguage?.toLowerCase().includes("id");
-  const lang = isIndonesian ? "id" : "en";
-
   return (
-    <html lang={lang}>
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

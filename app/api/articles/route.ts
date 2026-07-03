@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
   const count = Math.min(parseInt(url.searchParams.get('count') || '5'), 10);
   const langParam = url.searchParams.get('lang');
-  const lang = langParam === 'en' ? 'en' : 'id';
+  const lang = langParam === 'id' ? 'id' : 'en';
   const category = url.searchParams.get('category');
   const articles: Article[] = [];
   let attempts = 0;

@@ -3,7 +3,7 @@ export const runtime = 'edge';
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const title = url.searchParams.get('title');
-  const lang = url.searchParams.get('lang') || 'id'; // default to id
+  const lang = url.searchParams.get('lang') || 'en'; // default to en
   if (!title) {
     return Response.json({ error: 'title required' }, { status: 400 });
   }

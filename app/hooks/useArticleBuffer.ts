@@ -58,7 +58,7 @@ const translateSingleArticle = async (article: Article, targetLang: 'id' | 'en')
   return article; // fallback
 };
 
-export function useArticleBuffer(lang: 'id' | 'en' = 'id', category: string | null = null) {
+export function useArticleBuffer(lang: 'id' | 'en' = 'en', category: string | null = null) {
   const [articles, setArticles] = useState<Article[]>([]);
   const isHydrated = useRef(false);
   const prevLang = useRef(lang);

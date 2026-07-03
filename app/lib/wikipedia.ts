@@ -1,6 +1,6 @@
 import { WikipediaSummary } from './types';
 
-export async function fetchRandomArticle(lang: 'id' | 'en' = 'id'): Promise<WikipediaSummary | null> {
+export async function fetchRandomArticle(lang: 'id' | 'en' = 'en'): Promise<WikipediaSummary | null> {
   const WIKI_API = `https://${lang}.wikipedia.org/api/rest_v1/page/random/summary`;
   const response = await fetch(WIKI_API, {
     headers: {
@@ -19,7 +19,7 @@ export async function fetchRandomArticle(lang: 'id' | 'en' = 'id'): Promise<Wiki
   return data;
 }
 
-export async function fetchArticleSummary(title: string, lang: 'id' | 'en' = 'id'): Promise<WikipediaSummary | null> {
+export async function fetchArticleSummary(title: string, lang: 'id' | 'en' = 'en'): Promise<WikipediaSummary | null> {
   const response = await fetch(
     `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
     {

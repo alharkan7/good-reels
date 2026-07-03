@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { GraphData } from '@/app/lib/types';
 
-export function useNetworkGraph(articleTitle: string, lang: string = 'id') {
+export function useNetworkGraph(articleTitle: string, lang: string = 'en') {
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [totalLinks, setTotalLinks] = useState(0);

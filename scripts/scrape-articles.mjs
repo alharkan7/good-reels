@@ -14,7 +14,7 @@ function getHigherResImage(url) {
   return url.replace(/\b\d+px-/g, '800px-');
 }
 
-async function fetchOne(lang = 'id') {
+async function fetchOne(lang = 'en') {
   const WIKI_API = `https://${lang}.wikipedia.org/api/rest_v1/page/random/summary`;
   let backoff = 2000;
   
@@ -109,7 +109,7 @@ async function scrapeForLang(lang, filename) {
 async function main() {
   // Scrape English version first as it's the current priority for improvement
   await scrapeForLang('en', 'preloaded-articles-en.json');
-  await scrapeForLang('id', 'preloaded-articles.json');
+  await scrapeForLang('en', 'preloaded-articles.json');
 }
 
 main().catch(console.error);

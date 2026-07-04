@@ -29,7 +29,8 @@ function getPreloadedBatch(count: number, exclude: Set<string>, lang: 'id' | 'en
 
 const translateSingleArticle = async (article: Article, targetLang: 'id' | 'en'): Promise<Article> => {
   if (article.lang === targetLang) {
-    return article;
+    // Make sure we clear any failed translation flags since we are returning to the native language
+    return { ...article, translationFailedTargetLang: undefined };
   }
   const sourceLang = targetLang === 'en' ? 'id' : 'en';
   try {
@@ -112,32 +113,41 @@ export function useArticleBuffer(lang: 'id' | 'en' = 'en', category: string | nu
 
     // 2. Safely translate remaining non-preloaded articles via API
     const translateRest = async () => {
-      setArticles(current => [...current]); // force refresh
-      // get latest articles ref
-      setArticles(currentArticles => {
-        const mapped = [...currentArticles];
-        const fromRaw = targetLang === 'en' ? preloadedRawId : preloadedRawEn;
+      const currentArticles = [...articles];
+      const fromRaw = targetLang === 'en' ? preloadedRawId : preloadedRawEn;
+      const toRaw = targetLang === 'en' ? preloadedRawEn : preloadedRawId;
+
+      const promises = currentArticles.map(async (a, i) => {
+        const preloadedIdx = (fromRaw as Article[]).findIndex(x => x.id === a.id);
+        const isTranslatedPreloaded = preloadedIdx !== -1 || (toRaw as Article[]).some(x => x.id === a.id);
         
-        mapped.forEach(async (a, i) => {
-          const preloadedIdx = (fromRaw as Article[]).findIndex(x => x.id === a.id);
-          const toRaw = targetLang === 'en' ? preloadedRawEn : preloadedRawId;
-          const isTranslatedPreloaded = preloadedIdx !== -1 || (toRaw as Article[]).some(x => x.id === a.id);
-          
-          if (!isTranslatedPreloaded) {
-            const tr = await translateSingleArticle(a, targetLang);
-            setArticles(latest => {
-              const c = [...latest];
-              c[i] = tr;
-              return c;
-            });
-          }
-        });
-        return mapped;
+        if (!isTranslatedPreloaded) {
+          return { index: i, tr: await translateSingleArticle(a, targetLang) };
+        }
+        return null;
       });
+
+      const results = await Promise.all(promises);
+      const updates = results.filter(r => r !== null);
+
+      if (updates.length > 0) {
+        setArticles(latest => {
+          const newArticles = [...latest];
+          updates.forEach(u => {
+            if (u && u.index < newArticles.length) {
+              // Ensure we are updating the correct article id, in case the array changed
+              if (newArticles[u.index].id === currentArticles[u.index].id) {
+                newArticles[u.index] = u.tr;
+              }
+            }
+          });
+          return newArticles;
+        });
+      }
     };
     translateRest();
 
-  }, [lang]);
+  }, [lang]); // Ensure we don't depend on articles here to prevent loops, we can read from state update functions if needed but the logic uses closure
 
   const fetchBatch = useCallback(async (count: number, fetchLang: 'id' | 'en') => {
     if (isFetching.current) return;

@@ -4,7 +4,7 @@ import { Article, WikipediaSummary } from '@/app/lib/types';
 
 export const maxDuration = 30;
 
-function transformToArticle(summary: WikipediaSummary): Article {
+function transformToArticle(summary: WikipediaSummary, lang: 'id' | 'en'): Article {
   const imageSource = summary.thumbnail?.source || summary.originalimage?.source || '';
   const imageWidth = summary.thumbnail?.width || summary.originalimage?.width || 800;
   const imageHeight = summary.thumbnail?.height || summary.originalimage?.height || 600;
@@ -18,6 +18,7 @@ function transformToArticle(summary: WikipediaSummary): Article {
     imageHeight,
     articleUrl: summary.content_urls.mobile.page,
     extract: summary.extract,
+    lang,
   };
 }
 
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
         r.value !== null &&
         articles.length < count
       ) {
-        articles.push(transformToArticle(r.value));
+        articles.push(transformToArticle(r.value, lang));
       }
     }
 

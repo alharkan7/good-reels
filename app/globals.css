@@ -326,6 +326,10 @@ body {
   animation: fade-in 400ms ease-in-out;
 }
 
+.animate-fade-in {
+  animation: fade-in 300ms ease-out;
+}
+
 /* ==========================================
    Marquee (for long track names)
    ========================================== */

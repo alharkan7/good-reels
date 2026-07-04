@@ -90,6 +90,7 @@ export default function ReelsFeed({
       imageHeight: data.thumbnail?.height || 600,
       articleUrl: data.content_urls?.mobile?.page || '',
       extract: data.extract || '',
+      lang: searchLang,
     };
 
     prependArticle(article);
